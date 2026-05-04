@@ -1,0 +1,41 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Caches
+.ergast_cache/
+.pytest_cache/
+
+# Databases & Logs
+*.db
+*.sqlite3
+telemetry.db
+fails.txt
+test_results.txt
+tr*.txt
+
+# Temp / Generated Files
+session_*.csv
+session_*.pdf
+test_export.pdf
+live_data.json
+braking_points.json
+optimal_braking.json
+competitors.json
+alerts.json
+
+# Exclude random heavy files
+*.docx
+RedditApk/

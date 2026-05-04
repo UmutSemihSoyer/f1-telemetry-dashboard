@@ -1,0 +1,42 @@
+{
+    "network": {
+        "UDP_IP": "0.0.0.0",
+        "UDP_PORT": 20777
+    },
+    "listener": {
+        "BUFFER_LIMIT": 100
+    },
+    "structs": {
+        "HEADER_FORMAT": "<HBBBBQfIBB",
+        "CAR_TELEMETRY_FORMAT": "<HfffBbH",
+        "CAR_TELEMETRY_FULL_FORMAT": "<HfffBbHBBHHHHHBBBBBBBBHffffBBBB",
+        "LAP_DATA_FORMAT": "<IIHHfffBBBBBBBBBBBBBBHHB",
+        "DAMAGE_DATA_FORMAT": "<ffff26B",
+        "CAR_MOTION_FORMAT": "<ffffffhhhhhhffffff",
+        "CAR_STATUS_FORMAT": "<BBBBBfffHHBBHBBBbfBfffB",
+        "SESSION_PREFIX_FORMAT": "<BbbBHBbBHHBBBBBB"
+    },
+    "packet_sizes": {
+        "TELEMETRY_ID": 6,   "TELEMETRY_SIZE": 1347,
+        "LAP_DATA_ID": 2,    "LAP_DATA_SIZE": 972,
+        "DAMAGE_ID": 10,     "DAMAGE_SIZE": 948,
+        "MOTION_ID": 0,      "MOTION_SIZE": 1464,
+        "STATUS_ID": 7,      "STATUS_SIZE": 1058,
+        "SESSION_ID": 1,     "SESSION_SIZE": 632
+    },
+    "alerts": {
+        "TYRE_WARN_PCT":   70,
+        "TYRE_CRIT_PCT":   85,
+        "ERS_WARN_J":      800000,
+        "ERS_CRIT_J":      400000,
+        "FUEL_WARN_LAPS":  4,
+        "FUEL_CRIT_LAPS":  2,
+        "ENGINE_CRIT_PCT": 30
+    },
+    "voice": {
+        "ENABLED": true,
+        "RATE": 180,
+        "VOLUME": 0.9,
+        "COOLDOWN_SEC": 15
+    }
+}
