@@ -1,7 +1,7 @@
 """
-ml_analysis.py — F1 2022 Makine Öğrenmesi Analiz Modülü
-- K-Means ile optimal fren noktası kümeleme
-- Racing line deviyasyon skoru
+ml_analysis.py — F1 2022 Machine Learning Analysis Module
+- Optimal braking point clustering using K-Means
+- Racing line deviation score
 """
 import json
 import numpy as np
@@ -13,13 +13,13 @@ try:
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
-    print("[ml] scikit-learn bulunamadi. ML analizi devre disi.")
+    print("[ml] scikit-learn not found. ML analysis disabled.")
 
 
 def find_optimal_braking_zones(braking_points: list, n_clusters: int = 6) -> list:
     """
-    K-Means ile birden fazla turdan toplanan fren noktalarini kümele.
-    Her kümenin centroid'i = ideal fren noktasi.
+    Cluster braking points collected from multiple laps using K-Means.
+    Each cluster's centroid = ideal braking point.
     Returns: list of {'x': float, 'z': float, 'size': int}
     """
     if not HAS_SKLEARN or len(braking_points) < n_clusters * 2:
@@ -38,33 +38,33 @@ def find_optimal_braking_zones(braking_points: list, n_clusters: int = 6) -> lis
             result.append({'x': float(center[0]), 'z': float(center[1]), 'size': size})
         return result
     except Exception as e:
-        print(f"[ml] K-Means hatasi: {e}")
+        print(f"[ml] K-Means error: {e}")
         return []
 
 
 def calculate_lap_consistency(lap_times_ms: list) -> dict:
     """
-    Tur süresi tutarliligi metrigi.
+    Lap time consistency metric.
     Returns: {'mean': ms, 'std': ms, 'consistency_pct': float, 'best': ms}
     """
     if len(lap_times_ms) < 2:
         return {}
     arr  = np.array(lap_times_ms, dtype=float)
-    arr  = arr[arr > 30000]  # 30s'nin altini filtrele (geçersiz turlar)
+    arr  = arr[arr > 30000]  # Filter laps under 30s (invalid laps)
     if len(arr) < 2:
         return {}
     mean = float(np.mean(arr))
     std  = float(np.std(arr))
     best = float(np.min(arr))
-    # Tutarlilik: ne kadar az sapiyorsa o kadar iyi (100% = mükemmel)
+    # Consistency: the lower the deviation, the better (100% = perfect)
     consistency = max(0.0, 100.0 - (std / mean * 100))
     return {'mean': mean, 'std': std, 'consistency_pct': consistency, 'best': best}
 
 
 def run_braking_analysis_and_save():
     """
-    braking_points.json'u okuyup K-Means calistir,
-    sonucu optimal_braking.json'a yaz.
+    Read braking_points.json and run K-Means,
+    write result to optimal_braking.json.
     """
     if not Path("braking_points.json").exists():
         return
@@ -74,9 +74,9 @@ def run_braking_analysis_and_save():
         clusters = find_optimal_braking_zones(pts)
         with open("optimal_braking.json", "w") as f:
             json.dump(clusters, f)
-        print(f"[ml] {len(clusters)} optimal fren bölgesi hesaplandi.")
+        print(f"[ml] {len(clusters)} optimal braking zones calculated.")
     except Exception as e:
-        print(f"[ml] Analiz hatasi: {e}")
+        print(f"[ml] Analysis error: {e}")
 
 
 if __name__ == "__main__":
@@ -85,6 +85,6 @@ if __name__ == "__main__":
         import json
         with open("optimal_braking.json") as f:
             result = json.load(f)
-        print("Optimal fren noktalari:")
+        print("Optimal braking points:")
         for r in result:
-            print(f"  X:{r['x']:.1f} Z:{r['z']:.1f} ({r['size']} veri noktasi)")
+            print(f"  X:{r['x']:.1f} Z:{r['z']:.1f} ({r['size']} data points)")

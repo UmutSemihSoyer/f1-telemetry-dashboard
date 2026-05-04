@@ -3,43 +3,43 @@ import tkinter as tk
 from tkinter import filedialog
 import os
 
-# 1. Tkinter'in gereksiz ana penceresini gizle
+# 1. Hide Tkinter's unnecessary main window
 root = tk.Tk()
 root.withdraw()
 
-# Her zaman en üstte görünmesini sağla
+# Keep on top
 root.attributes('-topmost', True)
 
-print("[SİSTEM] Dosya seçimi bekleniyor... (Açılan pencereden CSV dosyanızı seçin)")
+print("[SYSTEM] Waiting for file selection... (Select your CSV file from the dialog)")
 
-# 2. Kullanıcıya dosya seçtir (Path ve isim derdi bitti)
+# 2. Prompt user to select a file
 dosya_yolu = filedialog.askopenfilename(
-    title="Analiz Edilecek Telemetri CSV'sini Seçin",
-    filetypes=[("CSV Dosyaları", "*.csv"), ("Tüm Dosyalar", "*.*")]
+    title="Select Telemetry CSV to Analyze",
+    filetypes=[("CSV Files", "*.csv"), ("All Files", "*.*")]
 )
 
-# 3. Eğer kullanıcı 'İptal'e basarsa sistemi durdur
+# 3. Stop system if user cancels
 if not dosya_yolu:
-    print("❌ Dosya seçimi iptal edildi. Sistem kapatılıyor.")
+    print("❌ File selection canceled. System shutting down.")
     exit()
 
-# Sadece dosyanın adını ekrana basmak için ayrıştır (Uzun yolları gizle)
+# Parse filename to print it
 dosya_adi = os.path.basename(dosya_yolu)
-print(f"\n[İŞLENİYOR] Hedef Kilitlendi: {dosya_adi}")
+print(f"\n[PROCESSING] Target Locked: {dosya_adi}")
 
-# 4. Veriyi Oku ve Anatomisini Çıkar
+# 4. Read Data and Extract Anatomy
 try:
     df = pd.read_csv(dosya_yolu)
-    print("\n✅ DOSYA BAŞARIYLA YÜKLENDİ!")
+    print("\n✅ FILE LOADED SUCCESSFULLY!")
     
-    print("\n--- SÜTUN İSİMLERİ (KOLONLAR) ---")
+    print("\n--- COLUMN NAMES ---")
     print(list(df.columns))
     
-    print(f"\n--- VERİ BOYUTU ---")
-    print(f"Toplam Satır: {len(df)}")
+    print(f"\n--- DATA SIZE ---")
+    print(f"Total Rows: {len(df)}")
     
-    print("\n--- İLK 3 SATIR ÖNİZLEME ---")
+    print("\n--- FIRST 3 ROWS PREVIEW ---")
     print(df.head(3))
 
 except Exception as e:
-    print(f"\n❌ OKUMA HATASI: Veri çekilemedi. Hata detayı:\n{e}")
+    print(f"\n❌ READ ERROR: Failed to fetch data. Error details:\n{e}")

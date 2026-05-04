@@ -68,10 +68,10 @@ def replay_session(df: pd.DataFrame, speed: float = 1.0):
             else:             return "red"
 
         snapshot = [{
-            "Hız":       200,
+            "Speed":       200,
             "RPM":       8000,
-            "Gaz":       0.8,
-            "Fren":      0.0,
+            "Throttle":       0.8,
+            "Brake":      0.0,
             "LapNum":    int(row.get('lap_num', i)),
             "LapTime":   lap_ms / 1000.0,
             "Sector1":   s1,

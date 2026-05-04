@@ -1,6 +1,6 @@
 """
-voice_alerts.py — F1 2022 Sesli Pit Duvarı Uyarıları
-pyttsx3 ile sistem TTS kullanir, arka plan thread'inde calısır.
+voice_alerts.py — F1 2022 Voice Pit Wall Alerts
+Uses pyttsx3 for system TTS, runs in a background thread.
 """
 import threading
 import time
@@ -12,7 +12,7 @@ try:
     HAS_TTS = True
 except ImportError:
     HAS_TTS = False
-    print("[voice] pyttsx3 bulunamadi. Sesli uyarilar kapali.")
+    print("[voice] pyttsx3 not found. Voice alerts disabled.")
 
 # Config yükle
 try:
@@ -44,7 +44,7 @@ def _init_engine():
         _engine.setProperty("rate",   TTS_RATE)
         _engine.setProperty("volume", TTS_VOLUME)
     except Exception as e:
-        print(f"[voice] TTS motoru baslatılamadi: {e}")
+        print(f"[voice] TTS engine failed to start: {e}")
         globals()["TTS_ENABLED"] = False
 
 
@@ -86,7 +86,7 @@ def start_voice_thread():
         return
     t = threading.Thread(target=_speech_worker, daemon=True)
     t.start()
-    print("[voice] Sesli uyari sistemi aktif.")
+    print("[voice] Voice alert system active.")
 
 
 # ---- Standart pit wall mesajlari ----

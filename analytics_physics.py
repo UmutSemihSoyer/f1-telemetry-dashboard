@@ -83,7 +83,7 @@ def braking_distance_sweep(v_entry_range, v_corner_kmh=80, decel_g=4.5):
 
 
 # ══════════════════════════════════════════════
-# 3. LASTİK TERMAL MODELİ
+# 3. TYRE THERMAL MODEL
 # ══════════════════════════════════════════════
 class TyreThermalModel:
     """
@@ -134,7 +134,7 @@ class TyreThermalModel:
     @property
     def status(self) -> str:
         if self.T < 70:  return "Soguk"
-        if self.T < 80:  return "Isinıyor"
+        if self.T < 80:  return "Warming up"
         if self.T < 110: return "Optimal"
         if self.T < 140: return "Sicak"
         return "ASIRI SICAK"
@@ -154,7 +154,7 @@ def simulate_lap_thermal(speed_arr, brake_arr, latg_arr, ambient=22.0, dt=0.1):
 
 
 # ══════════════════════════════════════════════
-# 4. GECİS FIRSAT PENCERESİ
+# 4. OVERTAKE OPPORTUNITY WINDOW
 # ══════════════════════════════════════════════
 def calculate_overtake_window(
     player_wear_pct:  float,
@@ -192,7 +192,7 @@ def calculate_overtake_window(
 
 
 # ══════════════════════════════════════════════
-# 5. YAKIT ACIGI ANALİZİ
+# 5. FUEL DEFICIT ANALYSIS
 # ══════════════════════════════════════════════
 def fuel_deficit_analysis(
     fuel_kg:       float,
@@ -205,7 +205,7 @@ def fuel_deficit_analysis(
     Returns: {is_sufficient, surplus_laps, deficit, save_pct_needed}
     """
     laps_rem     = max(0, total_laps - current_lap)
-    rate         = fuel_kg / max(1, fuel_laps)        # kg/tur (anlık)
+    rate         = fuel_kg / max(1, fuel_laps)        # kg/lap (instant)
     fuel_needed  = laps_rem * rate
 
     is_ok        = fuel_kg >= fuel_needed
@@ -231,7 +231,7 @@ def fuel_deficit_analysis(
 
 
 # ══════════════════════════════════════════════
-# 6. V11: FÜTÜRİSTİK YARIŞ EKOSİSTEMİ (FİZİK)
+# 6. V11: FUTURISTIC RACE ECOSYSTEM (PHYSICS)
 # ══════════════════════════════════════════════
 
 def dynamic_pit_loss(
@@ -296,7 +296,7 @@ def lift_and_coast_savings(
     fuel_rate_kg_per_sec: float = 0.035  # Approximate F1 fuel flow rate at max throttle
 ) -> dict:
     """
-    Ayak gazdan cekildiginde (Lift and Coast) tam gaz (Full Throttle) durumuna göre
+    Fuel saved when lifting off the throttle (Lift and Coast) compared to Full Throttle
     ne kadar yakit tasarrufu yapildigini gram cinsinden dondurur.
     """
     kg_saved = coast_time_sec * fuel_rate_kg_per_sec

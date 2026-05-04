@@ -103,7 +103,7 @@ def save_lap_time(lap_num, s1, s2, total, ts):
         conn.execute('INSERT INTO session_history (session_id,lap_num,lap_time_ms,sector1_ms,sector2_ms,timestamp) VALUES(?,?,?,?,?,?)',
                      (session_id, lap_num, total, s1, s2, ts))
         conn.commit(); conn.close()
-        logger.info(f"[TUR] Lap {lap_num} | S1:{s1}ms S2:{s2}ms Total:{total}ms")
+        logger.info(f"[LAP] Lap {lap_num} | S1:{s1}ms S2:{s2}ms Total:{total}ms")
     except Exception as e:
         logger.error(f"DB lap_times: {e}")
 
@@ -111,9 +111,9 @@ def save_lap_time(lap_num, s1, s2, total, ts):
 # ANALİZ FONKSİYONLARI
 # ====================================================
 def analyze_braking_zones(df):
-    if df.empty or 'Fren' not in df.columns:
+    if df.empty or 'Brake' not in df.columns:
         return []
-    is_braking = df['Fren'] > 0.05
+    is_braking = df['Brake'] > 0.05
     groups     = (is_braking != is_braking.shift()).cumsum()
     events     = df[is_braking].groupby(groups)
     leftover   = []
@@ -121,8 +121,8 @@ def analyze_braking_zones(df):
     for _, ev in events:
         if ev.index[-1] == last_idx:
             leftover = df.loc[ev.index[0]:].to_dict('records'); continue
-        entry = ev['Hız'].iloc[0]; exit_ = ev['Hız'].iloc[-1]
-        mp    = ev['Fren'].max() * 100
+        entry = ev['Speed'].iloc[0]; exit_ = ev['Speed'].iloc[-1]
+        mp    = ev['Brake'].max() * 100
         dur   = ev['Timestamp'].iloc[-1] - ev['Timestamp'].iloc[0]
         save_braking_zone(ev['Timestamp'].iloc[0], entry, exit_, dur, mp)
     return leftover
@@ -148,30 +148,30 @@ def check_alerts(df, latest_status, latest_damage):
         wear_max = max(latest_damage.get('TyreWearFL', 0), latest_damage.get('TyreWearFR', 0),
                        latest_damage.get('TyreWearRL', 0), latest_damage.get('TyreWearRR', 0))
         if wear_max > ALERT_CFG["TYRE_CRIT_PCT"]:
-            alerts.append({"level":"critical","icon":"⚠️","msg":f"Lastik Kritik! %{wear_max:.1f}"})
+            alerts.append({"level":"critical","icon":"⚠️","msg":f"Tyre Critical! %{wear_max:.1f}"})
             alert_tyre_critical(wear_max)
         elif wear_max > ALERT_CFG["TYRE_WARN_PCT"]:
-            alerts.append({"level":"warning","icon":"🟡","msg":f"Lastik Yıpranıyor %{wear_max:.1f}"})
+            alerts.append({"level":"warning","icon":"🟡","msg":f"Tyre Wear %{wear_max:.1f}"})
             alert_tyre_warn(wear_max)
         eng = latest_damage.get('EngineDamage', 0)
         if eng > ALERT_CFG["ENGINE_CRIT_PCT"]:
-            alerts.append({"level":"critical","icon":"🚨","msg":f"Motor Hasarı: %{eng}"})
+            alerts.append({"level":"critical","icon":"🚨","msg":f"Engine Damage: %{eng}"})
             alert_engine(eng)
 
     if latest_status:
         ers = latest_status.get('ERS', 0)
         ers_pct = (ers / 4_000_000) * 100
         if ers < ALERT_CFG["ERS_CRIT_J"]:
-            alerts.append({"level":"critical","icon":"🔋","msg":f"ERS Kritik: %{ers_pct:.1f}"})
+            alerts.append({"level":"critical","icon":"🔋","msg":f"ERS Critical: %{ers_pct:.1f}"})
             alert_ers_critical(ers_pct)
         elif ers < ALERT_CFG["ERS_WARN_J"]:
-            alerts.append({"level":"warning","icon":"🔋","msg":f"ERS Düşük: %{ers_pct:.1f}"})
+            alerts.append({"level":"warning","icon":"🔋","msg":f"ERS Low: %{ers_pct:.1f}"})
         fuel_laps = latest_status.get('FuelLaps', 99)
         if fuel_laps < ALERT_CFG["FUEL_CRIT_LAPS"]:
-            alerts.append({"level":"critical","icon":"⛽","msg":f"Yakıt Kritik! {fuel_laps:.1f} tur"})
+            alerts.append({"level":"critical","icon":"⛽","msg":f"Fuel Critical! {fuel_laps:.1f} laps"})
             alert_fuel_critical(fuel_laps)
         elif fuel_laps < ALERT_CFG["FUEL_WARN_LAPS"]:
-            alerts.append({"level":"warning","icon":"⛽","msg":f"Yakıt Uyarısı {fuel_laps:.1f} tur"})
+            alerts.append({"level":"warning","icon":"⛽","msg":f"Fuel Warning {fuel_laps:.1f} laps"})
             alert_fuel_warn(fuel_laps)
 
     try:
@@ -203,7 +203,7 @@ def compound_advisor(wear_pct: float, tyre_age: int, weather: int, fuel_laps: fl
 
 def analytics_worker():
     global _last_lap_num
-    logger.info("Analiz is parcacigi basladi.")
+    logger.info("Analytics thread started.")
 
     telemetry_buffer = []
     lap_buffer       = []
@@ -399,7 +399,7 @@ def analytics_worker():
                     radio_save_fuel()
 
                 # ── Fren Noktaları Overlay
-                brake_pts = df[df['Fren'] > 0.8][['PosX','PosZ','Hız']].to_dict('records')
+                brake_pts = df[df['Brake'] > 0.8][['PosX','PosZ','Speed']].to_dict('records')
                 if brake_pts:
                     try:
                         import os
@@ -433,7 +433,7 @@ def analytics_worker():
                 except Exception as e:
                     logger.error(f"live_data.json: {e}")
 
-                print(f"[SYS] Tur:{df['LapNum'].iloc[-1]} | Spd:{df['Hız'].mean():.0f}km/h | "
+                print(f"[SYS] Lap:{df['LapNum'].iloc[-1]} | Spd:{df['Speed'].mean():.0f}km/h | "
                       f"Pit:{pit_pred} | Weather:{df['Weather'].iloc[-1]} | "
                       f"Pos:{df['CarPosition'].iloc[-1]}")
 
@@ -447,7 +447,7 @@ def analytics_worker():
         except queue.Empty:
             continue
         except Exception as e:
-            logger.error(f"Analytics worker hatasi: {e}")
+            logger.error(f"Analytics worker error: {e}")
 
 # ====================================================
 # UDP DİNLEYİCİ
@@ -458,9 +458,9 @@ def udp_listener():
     try:
         sock.bind((UDP_IP, UDP_PORT))
     except Exception as e:
-        logger.error(f"Soket bağlantı hatası: {e}"); return
+        logger.error(f"Socket connection error: {e}"); return
 
-    print(f"F1 2022 V7 Ana Şebekesine Bağlanıldı. Port:{UDP_PORT}")
+    print(f"Connected to F1 2022 V7 Main Grid. Port:{UDP_PORT}")
 
     while True:
         try:
@@ -481,7 +481,7 @@ def udp_listener():
                 # Spec: [rear_left, rear_right, front_left, front_right]
                 telemetry_queue.put({
                     'Type':'Telemetry', 'Timestamp':session_time,
-                    'Hız':u[0], 'Gaz':u[1], 'Fren':u[3], 'Vites':u[5], 'RPM':u[6],
+                    'Speed':u[0], 'Throttle':u[1], 'Brake':u[3], 'Gear':u[5], 'RPM':u[6],
                     'DRS': u[7],
                     'BrakeTempRL':u[10], 'BrakeTempRR':u[11], 'BrakeTempFL':u[12], 'BrakeTempFR':u[13],
                     'TyreSurfRL':u[14], 'TyreSurfRR':u[15], 'TyreSurfFL':u[16], 'TyreSurfFR':u[17],
@@ -579,9 +579,9 @@ def udp_listener():
                 })
 
         except struct.error as e:
-            logger.warning(f"Paket hatası: {e}")
+            logger.warning(f"Packet error: {e}")
         except Exception as e:
-            logger.error(f"Beklenmedik hata: {e}")
+            logger.error(f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

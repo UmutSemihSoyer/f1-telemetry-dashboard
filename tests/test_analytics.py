@@ -56,7 +56,7 @@ class TestFuelLoad:
 
 
 # ════════════════════════════════════════════════════════════
-# FREN MESAFESİ
+# BRAKING DISTANCE
 # ════════════════════════════════════════════════════════════
 class TestBrakingDistance:
     def test_standard_braking(self):
@@ -94,7 +94,7 @@ class TestBrakingDistance:
 
 
 # ════════════════════════════════════════════════════════════
-# LASTİK TERMAL MODELİ
+# TYRE THERMAL MODEL
 # ════════════════════════════════════════════════════════════
 class TestTyreThermal:
     def test_braking_heats_tyre(self):
@@ -151,7 +151,7 @@ class TestTyreThermal:
 
 
 # ════════════════════════════════════════════════════════════
-# GECİS FIRSAT PENCERESİ
+# OVERTAKE OPPORTUNITY WINDOW
 # ════════════════════════════════════════════════════════════
 class TestOvertakeWindow:
     def test_high_wear_diff_high_opportunity(self):
@@ -181,7 +181,7 @@ class TestOvertakeWindow:
 
 
 # ════════════════════════════════════════════════════════════
-# YAKIT ACIGI ANALİZİ
+# FUEL DEFICIT ANALYSIS
 # ════════════════════════════════════════════════════════════
 class TestFuelDeficit:
     def test_sufficient_fuel(self):
@@ -213,7 +213,7 @@ class TestFuelDeficit:
 
 
 # ════════════════════════════════════════════════════════════
-# LAP KONSİSTENCY
+# LAP CONSISTENCY
 # ════════════════════════════════════════════════════════════
 class TestLapConsistency:
     def test_very_consistent(self):

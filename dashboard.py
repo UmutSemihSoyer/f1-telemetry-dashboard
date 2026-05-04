@@ -1,6 +1,6 @@
 """
 dashboard.py — F1 2022 V10 Pit Wall  
-Sekmeler: Live | Fizik & Strateji | Sanal Mühendis | Tarihsel & F1 Karsilastirma
+Tabs: LIVE | Physics & Strategy | Virtual Engineer | Historical & F1 Comparison
 """
 import dash
 from dash import dcc, html
@@ -131,7 +131,7 @@ app.layout = html.Div(
                  style={'marginBottom':'10px'},
                  children=[
             # ─── TAB 1: CANLI ───────────────────────────────────────
-            dcc.Tab(label='🔴 CANLI', value='live',
+            dcc.Tab(label='🔴 LIVE', value='live',
                     style=TAB_STYLE, selected_style=TAB_SELECTED,
                     children=[
                         html.Div(style={'display':'flex','flexWrap':'wrap','gap':'8px','marginBottom':'8px'},children=[
@@ -153,8 +153,8 @@ app.layout = html.Div(
                         html.Div(dcc.Graph(id='rpm-graph')),
                     ]),
 
-            # ─── TAB 2: FİZİK & STRATEJİ ────────────────────────────
-            dcc.Tab(label='⚙ Fizik & Strateji', value='physics',
+            # ─── TAB 2: PHYSICS & STRATEGY ────────────────────────────
+            dcc.Tab(label='⚙ Physics & Strategy', value='physics',
                     style=TAB_STYLE, selected_style=TAB_SELECTED,
                     children=[
                         # Row: 3D Track + ERS Enerji Haritasi
@@ -170,40 +170,40 @@ app.layout = html.Div(
                             # ── Yakit Yuk Hesaplayicisi
                             html.Div(style={'flex':'1','minWidth':'280px','background':'#141414',
                                             'borderRadius':'10px','padding':'14px','border':'1px solid #222'},children=[
-                                html.H4("⛽ Yakit Yuk Hesaplayicisi",
+                                html.H4("⛽ Fuel Load Calculator",
                                         style={'color':'#ffbb00','margin':'0 0 10px 0','fontSize':'14px'}),
                                 html.Div(style={'display':'grid','gridTemplateColumns':'1fr 1fr','gap':'8px'},children=[
-                                    html.Div([html.Label("Tur Sayisi", style={'fontSize':'11px','color':'#888'}),
+                                    html.Div([html.Label("Laps", style={'fontSize':'11px','color':'#888'}),
                                               dcc.Input(id='inp-laps',type='number',value=57,min=1,max=100,
                                                         style={'width':'100%','background':'#222','color':'#fff',
                                                                'border':'1px solid #444','borderRadius':'4px','padding':'4px'})]),
-                                    html.Div([html.Label("Yakit/tur (kg)", style={'fontSize':'11px','color':'#888'}),
+                                    html.Div([html.Label("Fuel/lap (kg)", style={'fontSize':'11px','color':'#888'}),
                                               dcc.Input(id='inp-fuelrate',type='number',value=2.2,min=1.0,max=4.0,step=0.1,
                                                         style={'width':'100%','background':'#222','color':'#fff',
                                                                'border':'1px solid #444','borderRadius':'4px','padding':'4px'})]),
-                                    html.Div([html.Label("SC Olasiligi %", style={'fontSize':'11px','color':'#888'}),
+                                    html.Div([html.Label("SC Probability %", style={'fontSize':'11px','color':'#888'}),
                                               dcc.Slider(id='sl-sc-prob',min=0,max=100,step=10,value=40,
                                                          marks={0:'0',50:'50',100:'100'})]),
-                                    html.Div([html.Label("SC Turu Sayisi", style={'fontSize':'11px','color':'#888'}),
+                                    html.Div([html.Label("SC Laps", style={'fontSize':'11px','color':'#888'}),
                                               dcc.Slider(id='sl-sc-laps',min=0,max=10,step=1,value=3,
                                                          marks={0:'0',5:'5',10:'10'})]),
                                 ]),
                                 html.Div(id='fuel-calc-result', style={'marginTop':'10px'}),
                             ]),
 
-                            # ── Fren Mesafesi Hesaplayicisi
+                            # ── Brake Distancesi Hesaplayicisi
                             html.Div(style={'flex':'1','minWidth':'280px','background':'#141414',
                                             'borderRadius':'10px','padding':'14px','border':'1px solid #222'},children=[
-                                html.H4("🛑 Fren Mesafesi Hesaplayicisi",
+                                html.H4("🛑 Braking Distance Calculator",
                                         style={'color':'#ff4444','margin':'0 0 10px 0','fontSize':'14px'}),
                                 html.Div(style={'display':'grid','gridTemplateColumns':'1fr 1fr','gap':'8px'},children=[
-                                    html.Div([html.Label("Giris Hizi (km/h)", style={'fontSize':'11px','color':'#888'}),
+                                    html.Div([html.Label("Entry Speed (km/h)", style={'fontSize':'11px','color':'#888'}),
                                               dcc.Slider(id='sl-ventry',min=100,max=380,step=10,value=300,
                                                          marks={100:'100',200:'200',300:'300',380:'380'})]),
-                                    html.Div([html.Label("Viraj Hizi (km/h)", style={'fontSize':'11px','color':'#888'}),
+                                    html.Div([html.Label("Corner Speed (km/h)", style={'fontSize':'11px','color':'#888'}),
                                               dcc.Slider(id='sl-vcorner',min=40,max=200,step=10,value=80,
                                                          marks={40:'40',100:'100',200:'200'})]),
-                                    html.Div([html.Label("Yavastama (G)", style={'fontSize':'11px','color':'#888'}),
+                                    html.Div([html.Label("Deceleration (G)", style={'fontSize':'11px','color':'#888'}),
                                               dcc.Slider(id='sl-decel',min=2.0,max=6.0,step=0.5,value=4.5,
                                                          marks={2:'2g',4:'4g',6:'6g'})]),
                                     html.Div(id='brake-dist-result'),
@@ -216,15 +216,15 @@ app.layout = html.Div(
                         html.Div(id='overtake-card', style={'marginBottom':'8px'}),
                     ]),
 
-            # ─── TAB 3: SANAL MÜHENDİS (V10) ────────────────────────
-            dcc.Tab(label='🧠 Sanal Mühendis', value='engineer',
+            # ─── TAB 3: VIRTUAL ENGINEER (V10) ────────────────────────
+            dcc.Tab(label='🧠 Virtual Engineer', value='engineer',
                     style=TAB_STYLE, selected_style=TAB_SELECTED,
                     children=[
                         html.Div(style={'display':'flex','flexWrap':'wrap','gap':'12px','marginBottom':'12px'},children=[
                             # Sol panel: Radar Grafiği (Driver Profiling)
                             html.Div(style={'flex':'1','minWidth':'300px','background':'#141414',
                                             'borderRadius':'10px','padding':'14px','border':'1px solid #222'},children=[
-                                html.H4("🧑‍🚀 Sürücü Profili (Fingerprint)",
+                                html.H4("🧑‍🚀 Driver Profile (Fingerprint)",
                                         style={'color':'#00d4ff','margin':'0 0 10px 0','fontSize':'14px'}),
                                 dcc.Graph(id='engineer-radar-graph')
                             ]),
@@ -232,14 +232,14 @@ app.layout = html.Div(
                             # Sağ panel: Actionable Feedback
                             html.Div(style={'flex':'2','minWidth':'400px','background':'#141414',
                                             'borderRadius':'10px','padding':'14px','border':'1px solid #222'},children=[
-                                html.H4("📻 Yarış Mühendisi Tavsiyeleri",
+                                html.H4("📻 Race Engineer Advisories",
                                         style={'color':'#ffbb00','margin':'0 0 10px 0','fontSize':'14px'}),
                                 html.Div(id='engineer-feedback-list', style={'display':'flex','flexDirection':'column','gap':'8px'})
                             ]),
                         ])
                     ]),
 
-            # ─── TAB 4: TARİHSEL & F1 KARSILASTIRMA ─────────────────
+            # ─── TAB 4: HISTORICAL & F1 COMPARISON ─────────────────
             dcc.Tab(label='📈 Tarihsel & F1', value='historical',
                     style=TAB_STYLE, selected_style=TAB_SELECTED,
                     children=[
@@ -403,7 +403,7 @@ def update_brake_calc(v_in, v_out, decel):
     try:
         r = calculate_braking_distance(float(v_in), float(v_out), float(decel))
         result = html.Div([
-            html.Div(f"Mesafe: {r['distance_m']} m", style={'color':'#ff4444','fontSize':'16px','fontWeight':'bold'}),
+            html.Div(f"Distance: {r['distance_m']} m", style={'color':'#ff4444','fontSize':'16px','fontWeight':'bold'}),
             html.Div(f"Sure:   {r['time_s']} s",     style={'color':'#ff8800','fontSize':'13px'}),
             html.Div(f"Kuvvet: {r['braking_force_kn']} kN", style={'color':'#aaa','fontSize':'12px'}),
         ])
@@ -414,8 +414,8 @@ def update_brake_calc(v_in, v_out, decel):
                                   marker=dict(size=5)))
         f.add_vline(x=float(v_in), line_dash='dash', line_color='#ffbb00',
                     annotation_text=f"{v_in}km/h")
-        f.update_layout(title="Fren Mesafesi vs Giris Hizi", xaxis_title="km/h",
-                         yaxis_title="Mesafe (m)", **DARK)
+        f.update_layout(title="Brake Distancesi vs Giris Hizi", xaxis_title="km/h",
+                         yaxis_title="Distance (m)", **DARK)
         return result, f
     except Exception as e:
         return html.Div(f"Hata:{e}",style={'color':'#ff4444'}), ef()
@@ -494,17 +494,17 @@ def update(n, ergast_data):
         if df.empty: raise ValueError("empty")
 
         # ── 1. Speed + DRS
-        f_spd=px.line(df,x='Timestamp',y='Hız',title="Speed km/h",color_discrete_sequence=['#00d4ff'])
+        f_spd=px.line(df,x='Timestamp',y='Speed',title="Speed km/h",color_discrete_sequence=['#00d4ff'])
         f_spd.update_layout(**DARK)
         if 'DRS' in df.columns:
             drs=df[df['DRS']==1]
             if not drs.empty:
-                f_spd.add_trace(go.Scatter(x=drs['Timestamp'],y=drs['Hız'],mode='markers',
+                f_spd.add_trace(go.Scatter(x=drs['Timestamp'],y=drs['Speed'],mode='markers',
                     marker=dict(color='lime',size=4,symbol='diamond'),name='DRS'))
 
         # ── 2. Inputs
-        f_inp=px.line(df,x='Timestamp',y=['Fren','Gaz'],title="Fren & Gaz",
-                      color_discrete_map={'Fren':'#ff2200','Gaz':'#00ff88'})
+        f_inp=px.line(df,x='Timestamp',y=['Brake','Throttle'],title="Brake & Throttle",
+                      color_discrete_map={'Brake':'#ff2200','Throttle':'#00ff88'})
         f_inp.update_layout(**DARK)
 
         # ── 3. Tyre Wear
@@ -527,11 +527,11 @@ def update(n, ergast_data):
         # ── 5. Track 2D
         has_pos='PosX' in df.columns and df['PosX'].abs().max()>1
         if has_pos:
-            f_trk=px.scatter(df,x='PosX',y='PosZ',color='Hız',color_continuous_scale='plasma',title="2D Pist")
+            f_trk=px.scatter(df,x='PosX',y='PosZ',color='Speed',color_continuous_scale='plasma',title="2D Pist")
             f_trk.update_traces(marker_size=3)
             bp=rj("braking_points.json")
             if bp: f_trk.add_trace(go.Scatter(x=[p['PosX'] for p in bp],y=[p['PosZ'] for p in bp],
-                mode='markers',marker=dict(color='red',size=6,symbol='circle-open'),name='Fren'))
+                mode='markers',marker=dict(color='red',size=6,symbol='circle-open'),name='Brake'))
             opt=rj("optimal_braking.json")
             if opt: f_trk.add_trace(go.Scatter(x=[o['x'] for o in opt],y=[o['z'] for o in opt],
                 mode='markers+text',marker=dict(color='gold',size=13,symbol='star',line_width=2,line_color='white'),
@@ -571,21 +571,21 @@ def update(n, ergast_data):
             times=[e.get('lapTimeMS',0)/1000. for e in comp[:10]]
             colors=['gold' if c.get('car')==0 else '#4488ff' for c in comp[:10]]
             f_gap=go.Figure(go.Bar(x=times,y=ids,orientation='h',marker_color=colors))
-            f_gap.update_layout(title="Siralama",xaxis_title="Anlık Tur (s)",**DARK)
-        else: f_gap=ef("Siralama")
+            f_gap.update_layout(title="Leaderboard",xaxis_title="Current Lap (s)",**DARK)
+        else: f_gap=ef("Leaderboard")
 
         # ── 9. RPM
         f_rpm=px.line(df,x='Timestamp',y='RPM',title="Motor RPM",color_discrete_sequence=['#ffbb00'])
         f_rpm.update_layout(**DARK)
 
         # ── 3D TRACK MAP (Physics tab) ─────────────────────────────
-        if has_pos and 'Hız' in df.columns:
+        if has_pos and 'Speed' in df.columns:
             # Z = Speed (height), creates "mountain" on fast straights
             f_3d = go.Figure(go.Scatter3d(
                 x=df['PosX'], y=df['PosZ'],
-                z=df['Hız'],
+                z=df['Speed'],
                 mode='lines',
-                line=dict(color=df['Hız'], colorscale='plasma', width=4),
+                line=dict(color=df['Speed'], colorscale='plasma', width=4),
                 name='Racing Line 3D'
             ))
             # Add braking points as red spikes
@@ -593,7 +593,7 @@ def update(n, ergast_data):
                 f_3d.add_trace(go.Scatter3d(
                     x=[p['PosX'] for p in bp], y=[p['PosZ'] for p in bp],
                     z=[0]*len(bp), mode='markers',
-                    marker=dict(color='red',size=4,symbol='circle'),name='Fren'))
+                    marker=dict(color='red',size=4,symbol='circle'),name='Brake'))
             f_3d.update_layout(
                 title="3D Pist Haritasi (Yukseklik = Hiz)",
                 scene=dict(
@@ -607,7 +607,7 @@ def update(n, ergast_data):
             )
         else: f_3d=ef("3D Pist (Veri bekleniyor)")
 
-        # ── ERS HASAT HARİTASI ─────────────────────────────────────
+        # ── ERS HARVEST MAP ─────────────────────────────────────
         if has_pos and 'ERS' in df.columns:
             # Calculate ERS delta: positive = harvesting, negative = deploying
             df2 = df.copy()
@@ -623,11 +623,11 @@ def update(n, ergast_data):
         else: f_ers=ef("ERS Hasat Haritasi")
         f_ers.update_layout(**DARK)
 
-        # ── TİRE THERMAL SİMÜLASYON ───────────────────────────────
-        if not df.empty and 'Hız' in df.columns and 'Fren' in df.columns:
+        # ── TYRE THERMAL SIMULATION ───────────────────────────────
+        if not df.empty and 'Speed' in df.columns and 'Brake' in df.columns:
             sample = df.tail(200)
-            spd = sample['Hız'].values.astype(float)
-            brk = sample['Fren'].values.astype(float)
+            spd = sample['Speed'].values.astype(float)
+            brk = sample['Brake'].values.astype(float)
             lat = sample['GLat'].values.astype(float) if 'GLat' in sample.columns else [0]*len(spd)
             sim_temps = simulate_lap_thermal(spd, brk, lat, ambient=22.0)
             actual_fl = sample['TyreInnerFL'].values if 'TyreInnerFL' in sample.columns else [0]*len(spd)
@@ -686,10 +686,10 @@ def update(n, ergast_data):
                           for row in pivot.values],
                     texttemplate="%{text}",
                 ))
-                f_cal.update_layout(title="Seans Isı Haritası (Tur Süreleri)", **DARK)
+                f_cal.update_layout(title="Session Heatmap (Lap Times)", **DARK)
             except Exception:
-                f_cal = ef("Seans Isı Haritası (veri az)")
-        else: f_cal=ef("Seans Isı Haritası")
+                f_cal = ef("Session Heatmap (low data)")
+        else: f_cal=ef("Session Heatmap")
 
         # ── SESSION COMPARE ───────────────────────────────────────
         if not ash.empty and ash['session_id'].nunique()>0:
@@ -799,7 +799,7 @@ def update(n, ergast_data):
 )
 def update_engineer(n):
     if not os.path.exists("engineer_feedback.json"):
-        return ef("Sürücü Profili Bekleniyor..."), [html.Div("Henüz tam bir tur atılmadı veya veri bekleniyor.", style={'color':'#888'})]
+        return ef("Driver Profile Waiting..."), [html.Div("A full lap has not been completed yet or waiting for data.", style={'color':'#888'})]
         
     try:
         report = rj("engineer_feedback.json", {})
@@ -818,7 +818,7 @@ def update_engineer(n):
         elif rpm < 11500: shift_score = max(0, 100 - ((11500 - rpm) / 1000) * 100)
         else: shift_score = max(0, 100 - ((rpm - 12300) / 1000) * 100)
             
-        categories = ['Trail Braking (Pürüzsüzlük)', 'Pedal Geçiş Hızı (Coast)', 'İdeal Vites (RPM)']
+        categories = ['Trail Braking (Smoothness)', 'Pedal Transition Speed (Coast)', 'Ideal Gear (RPM)']
         fig = go.Figure()
         fig.add_trace(go.Scatterpolar(
             r=[tb_score, pedal_score, shift_score],
@@ -841,13 +841,13 @@ def update_engineer(n):
         
         feedback_items = []
         # Add Fuel Efficiency Tracker as first item
-        feedback_items.append(html.Div(f"🍃 Lift-and-Coast Yakıt Tasarrufu (Son Tur): +{g_saved} gr ({coast_s}s süzülme)", style={
+        feedback_items.append(html.Div(f"🍃 Lift-and-Coast Fuel Save (Last Lap): +{g_saved} gr ({coast_s}s coasting)", style={
             'padding':'10px', 'background':'rgba(0,255,136,0.1)', 'border':f'1px solid #00ff8855',
             'borderRadius':'6px', 'color':'#00ff88', 'fontSize':'13px', 'fontWeight':'bold'
         }))
         alerts = report.get("all_feedback", [])
         if not alerts:
-            feedback_items.append(html.Div("Sürüş mükemmel, hata bulunamadı!", style={'color':'#00ff88','padding':'10px','background':'rgba(0,255,136,0.1)','borderRadius':'6px'}))
+            feedback_items.append(html.Div("Perfect driving, no errors found!", style={'color':'#00ff88','padding':'10px','background':'rgba(0,255,136,0.1)','borderRadius':'6px'}))
         else:
             for idx, msg in enumerate(alerts):
                 # Priortize first item with red color
@@ -862,11 +862,11 @@ def update_engineer(n):
         return fig, feedback_items
         
     except Exception as e:
-        return ef("Hata"), [html.Div(f"Mühendis modülü yüklenemedi: {e}", style={'color':'#ff2200'})]
+        return ef("Hata"), [html.Div(f"Engineer module failed to load: {e}", style={'color':'#ff2200'})]
 
 
 if __name__=='__main__':
     print("F1 2022 V10 Dashboard --> http://127.0.0.1:8050")
-    print("Sekmeler: CANLI | Fizik & Strateji | Sanal Mühendis | Tarihsel & F1")
+    print("Tabs: LIVE | Physics & Strategy | Virtual Engineer | Historical & F1")
     app.run(debug=True, port=8050)
 

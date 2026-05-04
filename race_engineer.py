@@ -86,21 +86,21 @@ def analyze_corners(current_df, pb_df):
             # 1. Brake Point Analysis
             brake_diff = matching_pb["dist_entry"] - c_curr["dist_entry"]
             if brake_diff > 15: # Braked 15m earlier than PB
-                feedback.append(f"{turn_name}: Frene {brake_diff:.0f} metre daha ERKEN bastin. Daha geç frenlemeyi dene.")
+                feedback.append(f"{turn_name}: You braked {brake_diff:.0f} meters EARLIER. Try braking later.")
             elif brake_diff < -15:
-                feedback.append(f"{turn_name}: Frene {abs(brake_diff):.0f} metre GEÇ bastin, apex'i kaçirmiş olabilirsin.")
+                feedback.append(f"{turn_name}: You braked {abs(brake_diff):.0f} meters LATE, you might have missed the apex.")
                 
             # 2. Minimum Speed Analysis
             speed_diff = matching_pb["v_min"] - c_curr["v_min"]
             if speed_diff > 5: # 5 km/h slower at apex
-                feedback.append(f"{turn_name}: Apex hizin {speed_diff:.0f} km/h DÜŞÜK. Viraj içine daha fazla hiz taşimaya çaliş.")
+                feedback.append(f"{turn_name}: Apex speed is {speed_diff:.0f} km/h SLOWER. Try carrying more speed into the corner.")
                 
             # 3. Throttle Application Analysis
             # Compare time/distance from apex to full throttle
             dist_to_throttle_curr = current_df["LapDistance"].iloc[c_curr["exit_idx"]] - c_curr["dist_apex"]
             dist_to_throttle_pb = pb_df["LapDistance"].iloc[matching_pb["exit_idx"]] - matching_pb["dist_apex"]
             if dist_to_throttle_curr > dist_to_throttle_pb + 15:
-                feedback.append(f"{turn_name}: Çikişta gaza {dist_to_throttle_curr - dist_to_throttle_pb:.0f} metre daha GEÇ oturdun. Traksiyon kaybettin.")
+                feedback.append(f"{turn_name}: You applied throttle {dist_to_throttle_curr - dist_to_throttle_pb:.0f} meters LATER on exit. Traction lost.")
 
     return feedback
 
@@ -153,9 +153,9 @@ def calculate_trail_braking_score(df):
     
     feedback = []
     if score < 60:
-        feedback.append("Frenleri çok sert/aniden birakiyorsun. ABS'ye yüklenmek yerine Trail-Braking (Yavaşça birakma) yapmaya çaliş.")
+        feedback.append("You release the brakes too sharply. Try Trail-Braking (smooth release) instead of relying on ABS.")
     elif score > 85:
-        feedback.append("Trail-Braking mükemmel, aracin dengesini viraj içine çok iyi taşiyorsun.")
+        feedback.append("Excellent Trail-Braking, carrying the car's balance into the corner perfectly.")
         
     return {
         "score": score,
@@ -179,7 +179,7 @@ def analyze_coast_time(df):
     
     feedback = []
     if coast_time_sec > 1.5:
-        feedback.append(f"Bu tur toplam {coast_time_sec:.1f} saniye 'Süzüldün' (İki pedala da basmadin). Pedallar arasi geçişte çok saniye kaybediyorsun!")
+        feedback.append(f"You coasted for {coast_time_sec:.1f} seconds this lap (neither pedal pressed). You're losing time in pedal transitions!")
         
     return {
         "coast_time_sec": coast_time_sec,
@@ -206,9 +206,9 @@ def analyze_shifting(df):
     feedback = []
     # F1 2022 cars shift optimally around 11500 - 12200 RPM depending on gear
     if avg_shift_rpm > 12300:
-        feedback.append("Vitesleri çok GEÇ atiyorsun (Redline'a vuruyorsun). Motor devri kesiciye girip zaman kaybettiriyor.")
+        feedback.append("You are upshifting too LATE (hitting the redline). Hitting the rev limiter costs time.")
     elif avg_shift_rpm < 11000:
-        feedback.append("Vitesleri çok ERKEN atiyorsun (Short-shifting). Ciddi güç kaybediyorsun, devri biraz daha yükselt.")
+        feedback.append("You are upshifting too EARLY (short-shifting). Losing significant power, carry more revs.")
         
     return {
         "avg_shift_rpm": avg_shift_rpm,
@@ -226,7 +226,7 @@ def setup_advisor(df):
     # 1. Top Speed Analysis (Straight line speed)
     max_speed = df["Speed"].max()
     if max_speed < 310:
-        feedback.append("Düzlük hizim çok düşük. Arka kanadi (Rear Wing) 2-3 tik kısmayi/düşürmeyi düşünebilirsin.")
+        feedback.append("Top speed is very low. Consider reducing the Rear Wing by 2-3 clicks.")
         
     # 2. Traction Analysis (Wheel slip on corner exit)
     # Simple heuristic: If RPM spikes while speed is low and throttle is high (wheelspin)
@@ -237,7 +237,7 @@ def setup_advisor(df):
                              (df["EngineRPM"] > 11500)).sum()
                              
         if low_gear_high_rpm > 20: # Arbitrary threshold for wheelspin ticks
-            feedback.append("Düşük hizli viraj çikişlarinda çok patinajda kaliyorsun. Diferansiyeli (On-Throttle Diff) daha açik (Low) ayarlamayi dene.")
+            feedback.append("Experiencing heavy wheelspin on slow corner exits. Try opening the On-Throttle Diff (Lower setting).")
             
     return feedback
 
@@ -287,9 +287,9 @@ def analyze_race_start(df):
     
     feedback = []
     if time_0_100_s < 2.8:
-        feedback.append(f"🚦 Mükemmel Kalkiş! 0-100 km/h: {time_0_100_s:.2f}s | Kalkiş Puanin: {score:.0f}/100")
+        feedback.append(f"🚦 Excellent Launch! 0-100 km/h: {time_0_100_s:.2f}s | Launch Score: {score:.0f}/100")
     else:
-        feedback.append(f"🚦 Yavaş Kalkiş! 0-100 km/h: {time_0_100_s:.2f}s (Patinaj: {wheelspin_ticks} birim). Debriyaj noktasini daha iyi ayarla.")
+        feedback.append(f"🚦 Slow Launch! 0-100 km/h: {time_0_100_s:.2f}s (Wheelspin: {wheelspin_ticks} units). Adjust clutch bite point.")
         
     return {"feedback": feedback}
 
@@ -317,7 +317,7 @@ def analyze_slipstream(current_df, pb_df):
         res = calculate_slipstream_advantage(pb_max_speed, curr_max_speed)
         time_gained = res["time_gained_sec"]
         spd_delta = res["speed_delta_kmh"]
-        feedback.append(f"💨 Slipstream/DRS Etkisi: Düzlükte +{spd_delta:.1f} km/h hiz avantajin vardi. (Tahmini {time_gained:.3f} sn kazandin)")
+        feedback.append(f"💨 Slipstream/DRS Effect: +{spd_delta:.1f} km/h advantage on the straight. (Est. {time_gained:.3f} s gained)")
         
     return {"feedback": feedback}
 

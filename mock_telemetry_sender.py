@@ -3,7 +3,7 @@ import socket, struct, time, math, json, random
 with open("config.json") as f:
     CONFIG = json.load(f)
 
-UDP_IP   = CONFIG["network"]["UDP_IP"]
+UDP_IP   = "127.0.0.1" if CONFIG["network"]["UDP_IP"] == "0.0.0.0" else CONFIG["network"]["UDP_IP"]
 UDP_PORT = CONFIG["network"]["UDP_PORT"]
 PKT      = CONFIG["packet_sizes"]
 
@@ -76,7 +76,7 @@ while True:
     pos_z=500.*math.sin(track_angle)
     drs=1 if speed>250 and is_accel else 0
 
-    # ---- PAKET 0: HAREKET ----
+    # ---- PACKET 0: MOTION ----
     mot_cars=b''
     for i in range(22):
         mot_cars+=struct.pack(MOTION_FMT,
@@ -84,7 +84,7 @@ while True:
             g_lat,g_lon,0., 0.,0.,0.) if i==0 else bytes(60)
     sock.sendto(hdr(0)+mot_cars+bytes(36*4+4),(UDP_IP,UDP_PORT))
 
-    # ---- PAKET 6: FULL TELEMETRİ (60 bytes each car) ----
+    # ---- PACKET 6: FULL TELEMETRY (60 bytes each car) ----
     # <HfffBbHBBHHHHHBBBBBBBBHffffBBBB>
     tel_cars=b''
     for i in range(22):
@@ -100,7 +100,7 @@ while True:
         ) if i==0 else bytes(60)
     sock.sendto(hdr(6)+tel_cars+struct.pack('<BBb',255,255,0),(UDP_IP,UDP_PORT))
 
-    # ---- PAKET 2: TUR VERİSİ (tüm 22 araç - mock) ----
+    # ---- PACKET 2: LAP DATA (all 22 cars - mock) ----
     s1=int(lap_ms*0.3); s2=int(lap_ms*0.35)
     lap_cars=b''
     for i in range(22):
@@ -112,7 +112,7 @@ while True:
             car_pos,0,1,0,0, 0,0,0,1,1,2,0,0,0,0)
     sock.sendto(hdr(2)+lap_cars+struct.pack('<BB',255,255),(UDP_IP,UDP_PORT))
 
-    # ---- PAKET 10: HASAR ----
+    # ---- PACKET 10: DAMAGE ----
     dmg_cars=b''
     for i in range(22):
         dmg_cars+=struct.pack(DAMAGE_FMT,
@@ -121,7 +121,7 @@ while True:
             0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0) if i==0 else bytes(42)
     sock.sendto(hdr(10)+dmg_cars,(UDP_IP,UDP_PORT))
 
-    # ---- PAKET 7: ARAÇ DURUMU ----
+    # ---- PACKET 7: CAR STATUS ----
     status_cars=b''
     for i in range(22):
         status_cars+=struct.pack(CAR_STATUS_FMT,
@@ -130,7 +130,7 @@ while True:
             ers,1, 500000.,200000.,300000., 0) if i==0 else bytes(47)
     sock.sendto(hdr(7)+status_cars,(UDP_IP,UDP_PORT))
 
-    # ---- PAKET 1: SEANS VERİSİ ----
+    # ---- PACKET 1: SESSION DATA ----
     # <BbbBHBbBHHBBBBBB> = 18 bytes + marshal zones[21]*5 + safety_car+network
     # Total expected payload: 632 - 24(header) = 608 bytes
     sess_fields = struct.pack(SESSION_FMT,

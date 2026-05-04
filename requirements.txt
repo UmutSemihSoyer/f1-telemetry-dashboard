@@ -4,3 +4,5 @@ dash
 plotly
 Flask
 python-docx
+requests
+scikit-learn
