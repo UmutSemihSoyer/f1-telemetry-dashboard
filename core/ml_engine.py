@@ -85,6 +85,36 @@ class TyreDegradationModel:
         pred = self.model.predict(X_test)[0]
         return max(0, int(pred))
 
+class BrakingCoach:
+    def __init__(self):
+        self.best_braking_points = [] # List of LapDistance markers
+
+    def load_best_lap(self, lap_data):
+        """Identify braking points (start of braking) in the best lap."""
+        self.best_braking_points = []
+        if not lap_data: return
+        
+        # Simple heuristic: Find where Brake goes from < 10 to > 50
+        for i in range(1, len(lap_data)):
+            prev = lap_data[i-1].get('Brake', 0)
+            curr = lap_data[i].get('Brake', 0)
+            if curr > 50 and prev < 10:
+                self.best_braking_points.append(lap_data[i].get('LapDistance', 0))
+
+    def check_brake_timing(self, current_dist):
+        """Compare current distance with the nearest best-lap braking point."""
+        if not self.best_braking_points: return None
+        
+        # Find nearest point within 100m
+        nearest = min(self.best_braking_points, key=lambda x: abs(x - current_dist))
+        diff = current_dist - nearest # positive means we are LATER than best lap
+        
+        if abs(diff) < 100:
+            if diff < -8.0: return "EARLY"   # Braked 8m+ too early
+            if diff > 8.0:  return "LATE"    # Braked 8m+ too late
+            return "GOOD"
+        return None
+
 def run_ml_analysis_pass(input_file="braking_points.json", output_file="optimal_braking.json"):
     """
     Utility function to run the ML analysis on a stored JSON file.

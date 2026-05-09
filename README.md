@@ -1,11 +1,12 @@
-# 🏎️ F1 2022 Telemetry Suite v5.0 — Ultra-Premium
+# 🏎️ F1 2022 Telemetry Suite v6.0 — God-Tier Edition
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Architecture](https://img.shields.io/badge/Architecture-In--Memory-red)](shared_state.py)
+[![God-Tier](https://img.shields.io/badge/Edition-God--Tier-purple)](app.py)
 
-A professional-grade, high-performance **Desktop Telemetry Suite** built for **F1 2022**. 
-Transitioning from a web-based dashboard to a native, zero-latency desktop application, this suite provides industry-standard analysis tools comparable to MoTeC and VRS.
+A high-performance, cloud-connected **Desktop Telemetry Suite** built for **F1 2022**. 
+v6.0 introduces the **God-Tier** update: Multiplayer Live Streaming, AI Braking Coaching, and Discord Automation.
 
 ---
 
@@ -15,49 +16,20 @@ Transitioning from a web-based dashboard to a native, zero-latency desktop appli
 
 ---
 
-## ✨ Features (v5.0 Ultra-Premium)
+## ✨ God-Tier Features (v6.0)
 
 | Feature | Description |
 |---|---|
+| 🌐 **Live Multiplayer Stream** | Expose your local dashboard to a public URL via **Ngrok**. Let your engineer watch live. |
+| 🎓 **AI Braking Coach** | Real-time voice coaching comparing your braking points to your personal best. |
+| 💬 **Discord Automation** | Automated posting of New Best Laps and PDF session reports to your Discord channel. |
 | ⚡ **In-Memory Engine** | Shared Memory architecture with **0ms latency**. No disk I/O bottlenecks. |
 | 🖥️ **Native Desktop App** | Independent Windows application window powered by `pywebview`. |
 | 👻 **Live Ghost Car** | Visual "Personal Best" ghost on the track map to track live delta. |
 | 🤖 **AI Tyre Prediction** | RandomForest ML model predicting the tyre degradation "cliff". |
 | 📊 **MoTeC i2 Export** | Export sessions to MoTeC-compatible CSVs for professional engineering. |
-| 🗺️ **Full Track Trace** | Dynamic pathing that draws the entire lap trace, not just a slice. |
-| ⚖️ **Setup Tuning** | Dedicated tab for Suspension Compression & Wheel Slip analysis. |
-| 🏰 **Race Control** | 22-car live Timing Tower with positions, gaps, and penalties. |
-| 📡 **Advanced Voice** | Fully active Voice Engineer radio for fuel, wear, and DRS alerts. |
 | 🌦️ **Rain Radar** | Real-time weather forecasting based on 30-minute game samples. |
-| ⏱️ **Live Delta** | iRacing-style Δ vs Personal Best with animated color bar |
-| 📄 **PDF Reports** | Auto-generated post-session PDF/CSV exports |
-
----
-
-## 🏗️ Technical Architecture
-
-The suite has been re-engineered for performance using a unified process model:
-
-```
-udp_telemetry/
-├── app.py                  # MAIN ENTRY POINT — Desktop GUI + Listener + Server
-├── shared_state.py         # SHARED MEMORY — Thread-safe RAM storage (0ms I/O)
-│
-├── core/                   # Processing Layer
-│   ├── listener.py         # High-speed UDP packet binary unpacking
-│   ├── physics_engine.py   # G-force and thermal models
-│   └── ml_engine.py        # RandomForest Tyre Prediction & K-Means clusters
-│
-├── ui/                     # Presentation Layer
-│   ├── layout.py           # Dashboard design with interactive strategy planner
-│   └── callbacks.py        # Real-time state fetching from RAM
-│
-├── services/               # Infrastructure Layer
-│   ├── exporter.py         # PDF Reporting & MoTeC CSV Engine
-│   └── data_service.py     # SQLite persistence for lap history
-│
-└── build.ps1               # COMPILATION — One-click .EXE creation script
-```
+| 📡 **Voice Engineer** | Fully active radio alerts for fuel, wear, DRS, and coaching. |
 
 ---
 
@@ -71,105 +43,52 @@ cd f1-telemetry-dashboard
 pip install -r requirements.txt
 ```
 
-### 2. Run the Desktop App
+### 2. Configure (v6.0 Specifics)
+Edit `config.json` to enable new integrations:
+```json
+"remote": {
+    "STREAMING_ENABLED": true,
+    "NGROK_AUTH_TOKEN": "YOUR_TOKEN_HERE"
+},
+"integrations": {
+    "DISCORD_WEBHOOK_URL": "YOUR_WEBHOOK_HERE"
+}
+```
 
+### 3. Run the Suite
 ```bash
 python app.py
 ```
-*Note: This starts the UDP Listener, the Dash background server, and the Desktop Window in one command.*
-
-### 3. Create a Standalone .EXE
-
-To run the suite without Python:
-1. Open PowerShell.
-2. Run `./build.ps1`.
-3. Find your app in `dist/F1_PitWall.exe`.
 
 ---
 
-## 🎮 Mock Mode (Test Without the Game)
+## 🎓 AI Braking Coach
+The coach analyzes your braking performance in real-time. If you brake 8m+ earlier than your personal best, you'll hear: *"Braked too early! Brake later."* If you overshoot, it warns: *"Braked too late! Focus on the exit."*
 
-You can test the full system without F1 2022 running:
+## 🌐 Remote Engineering (Ngrok)
+When `STREAMING_ENABLED` is true, the app generates a public URL. Share this with your teammate so they can monitor your temperatures, ERS, and strategy from their own device, anywhere in the world.
 
-```bash
-# Terminal 1 — Start the main app
-python app.py
+---
 
-# Terminal 2 — Broadcast simulated telemetry
-python mock_telemetry_sender.py
+## 🏗️ Technical Architecture
+
+```
+udp_telemetry/
+├── app.py                  # ENTRY POINT — GUI + Ngrok Tunnel + Dash Server
+├── shared_state.py         # SHARED MEMORY — Zero-latency state pool
+├── core/                   # Logic — AI Braking Coach, ML Models, Packet Parser
+├── ui/                     # UI — Layouts and live Callbacks
+├── services/               # Infrastructure — Discord Service, MoTeC Exporter
+└── build.ps1               # COMPILATION — Standalone .EXE script
 ```
 
 ---
 
 ## 🕹️ In-Game Setup (F1 2022)
 
-1. Open **Settings → Telemetry Settings**
-2. Enable **UDP Telemetry**
-3. Set **IP Address** → `127.0.0.1`
-4. Set **Port** → `20777`
-5. Set **UDP Format** → `2022`
-6. Start `app.py` and begin a session
-
----
-
-## 🏎️ Analysis Tools
-
-### Multi-Lap Overlay
-In the **Analysis** tab, select two completed laps from the dropdowns. The system will overlay their speed, throttle, and brake traces on a single graph, allowing you to pinpoint exactly where you lost time.
-
-### MoTeC Integration
-Use the **Export to MoTeC** button to generate a CSV formatted for MoTeC i2 Pro. It includes high-resolution channels for:
-- Steering Angle
-- Suspension Velocity
-- Wheel Slip (Traction/Lockup)
-- G-Forces (Lateral/Longitudinal)
-
-### Strategy Planner
-An interactive simulator where you can input pit stop laps. The engine uses our ML model to estimate the **Total Race Time**, comparing different strategies against the optimal path.
-
----
-
-## 🔁 Session Replay
-
-Replay any previously recorded session through the live dashboard:
-
-```bash
-# List all saved sessions
-python replay.py
-
-# Replay the latest session at 2× speed
-python replay.py --speed 2.0
-```
-
----
-
-## 🌐 Ergast API — Compare vs Real F1 Drivers
-
-The suite integrates with the Ergast API to let you compare your lap times against real-world data from the 2023-2024 seasons. Results are cached locally in `.ergast_cache/`.
-
----
-
-## 🛠️ Configuration Reference (`config.json`)
-
-| Key | Default | Description |
-|---|---|---|
-| `network.UDP_IP` | `0.0.0.0` | Listen on all interfaces |
-| `network.UDP_PORT` | `20777` | Must match in-game setting |
-| `voice.ENABLED` | `true` | Enable/disable TTS voice alerts |
-| `voice.RATE` | `180` | TTS speech rate (words per minute) |
-| `voice.COOLDOWN_SEC` | `15` | Minimum seconds between repeated alerts |
-
----
-
-## 📦 Dependencies
-
-- **dash, plotly** — Dashboard and visualization
-- **pywebview** — Native desktop windowing
-- **pandas, numpy** — Data processing
-- **scikit-learn** — AI Tyre prediction & ML clustering
-- **fpdf2** — PDF report generation
-- **pyttsx3** — Voice alerts (TTS)
-- **pyinstaller** — Standalone .EXE compilation
+1. **Telemetry Settings:** Enable UDP Telemetry.
+2. **IP/Port:** `127.0.0.1` / `20777`.
+3. **Format:** `2022`.
 
 ---
 

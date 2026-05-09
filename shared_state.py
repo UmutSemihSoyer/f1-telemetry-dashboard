@@ -5,8 +5,11 @@ from core.ml_engine import TyreDegradationModel
 # Thread lock for safe read/write across Dash (Flask) threads and UDP Listener thread
 state_lock = threading.Lock()
 
+from core.ml_engine import TyreDegradationModel, BrakingCoach
+
 # ML Models
 tyre_model = TyreDegradationModel()
+braking_coach = BrakingCoach()
 
 # Best Lap Tracking
 best_lap_time = 9999999.0  # ms
@@ -88,6 +91,7 @@ def set_lap_completed(lap_num, lap_time_ms):
         if lap_data and lap_time_ms > 0 and lap_time_ms < best_lap_time:
             best_lap_time = lap_time_ms
             best_lap_data = list(lap_data)
+            braking_coach.load_best_lap(best_lap_data)
 
 def get_best_lap_data():
     with state_lock:

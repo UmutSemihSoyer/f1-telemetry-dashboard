@@ -27,3 +27,5 @@ pywebview
 
 pyinstaller
 scikit-learn
+
+pyngrok

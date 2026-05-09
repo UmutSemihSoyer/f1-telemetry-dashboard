@@ -137,6 +137,29 @@ class ExportService:
         final_df.to_csv(filename, index=False)
         return filename
 
+    def send_to_discord(self, pdf_path, message=""):
+        try:
+            import requests
+            with open("config.json") as f:
+                cfg = json.load(f)
+                webhook_url = cfg.get("integrations", {}).get("DISCORD_WEBHOOK_URL")
+            
+            if not webhook_url:
+                return False
+            
+            payload = {"content": message or "🏎️ **F1 2022 Pit Wall — Session Report Ready**"}
+            
+            if pdf_path and Path(pdf_path).exists():
+                with open(pdf_path, 'rb') as f:
+                    files = {'file': (pdf_path, f, 'application/pdf')}
+                    r = requests.post(webhook_url, data=payload, files=files)
+            else:
+                r = requests.post(webhook_url, json=payload)
+                
+            return r.status_code == 200 or r.status_code == 204
+        except Exception:
+            return False
+
 def run_export():
     """
     Stand-alone export trigger reading from local sqlite.

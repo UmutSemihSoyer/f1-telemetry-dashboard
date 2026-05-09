@@ -1,10 +1,21 @@
 from dash import html, dcc
+import os
 
 def create_header():
+    stream_url = ""
+    if os.path.exists('stream_url.txt'):
+        with open('stream_url.txt', 'r') as f:
+            stream_url = f.read().strip()
+
     return html.Div(className='header-bar', children=[
-        html.Div(children=[
-            html.H1("🏎️ F1 2022 PIT WALL", style={'margin': 0, 'fontSize': '1.5rem', 'fontWeight': '900'}),
-            html.Span("PRO ANALYTICS EDITION", style={'color': '#8e8e93', 'fontSize': '0.7rem', 'letterSpacing': '2px'})
+        html.Div(className='header', children=[
+            html.Div(children=[
+                html.H1("F1 2022 PIT WALL PRO", style={'margin': '0', 'letterSpacing': '2px'}),
+                html.Div("GOD-TIER TELEMETRY SUITE", style={'fontSize': '12px', 'color': '#8e8e93', 'letterSpacing': '1px'})
+            ]),
+            html.Div(id='live-stream-link', children=[
+                html.A("Watch Stream", href=stream_url, target="_blank") if stream_url else ""
+            ], style={'color': '#9b00ef', 'fontWeight': 'bold', 'fontSize': '14px'})
         ]),
         html.Div(id='connection-status', children=[
             html.Span("● LIVE", className='critical-alert', style={'fontSize': '0.8rem', 'fontWeight': 'bold'})

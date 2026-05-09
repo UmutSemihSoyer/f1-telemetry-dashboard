@@ -38,5 +38,12 @@
         "RATE": 180,
         "VOLUME": 0.9,
         "COOLDOWN_SEC": 15
+    },
+    "remote": {
+        "STREAMING_ENABLED": false,
+        "NGROK_AUTH_TOKEN": ""
+    },
+    "integrations": {
+        "DISCORD_WEBHOOK_URL": ""
     }
 }

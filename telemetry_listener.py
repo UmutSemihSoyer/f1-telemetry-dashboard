@@ -23,6 +23,7 @@ class TelemetryManager:
         self.telemetry_buffer = []
         self._last_lap_num = 0
         self.full_lap_buffer = []
+        self._was_braking = False
 
         # Latest state from each packet type — merged into every chunk
         self._latest_lap_info    = {}
@@ -197,6 +198,19 @@ class TelemetryManager:
         sc_status = latest.get('SafetyCarStatus', 0)
         if sc_status > 0:
             alert_safety_car(sc_status)
+            
+        # 6. Braking Coach
+        curr_brake = latest.get('Brake', 0)
+        if curr_brake > 50 and not self._was_braking:
+            self._was_braking = True
+            import shared_state
+            status = shared_state.braking_coach.check_brake_timing(latest.get('LapDistance', 0))
+            if status == "EARLY":
+                speak("Braked too early! Brake later.", "coach_early")
+            elif status == "LATE":
+                speak("Braked too late! Focus on the exit.", "coach_late")
+        elif curr_brake < 10:
+            self._was_braking = False
 
     def handle_lap_completion(self, lap_item):
         lap_num = self._last_lap_num
@@ -210,7 +224,14 @@ class TelemetryManager:
         self.data_service.save_lap(lap_num, s1, s2, total, ts)
 
         import shared_state
+        from services.exporter import ExportService
+        
+        is_new_best = (total > 0 and total < shared_state.best_lap_time)
         shared_state.set_lap_completed(lap_num, total)
+        
+        if is_new_best:
+            # Notify Discord of New Personal Best
+            ExportService().send_to_discord(None, f"⭐ **Personal Best Shattered!** Lap {lap_num}: `{total/1000:.3f}s` 🏎️💨")
 
         threading.Thread(target=run_ml_analysis_pass, daemon=True).start()
 

@@ -1,7 +1,9 @@
+import json
 import threading
 import time
 import webview
 import logging
+from pyngrok import ngrok
 
 # We import the Dash app and the TelemetryManager
 from dashboard import app
@@ -9,6 +11,21 @@ from telemetry_listener import TelemetryManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("AppWindow")
+
+def start_ngrok():
+    try:
+        with open("config.json") as f:
+            cfg = json.load(f)
+            if cfg.get("remote", {}).get("STREAMING_ENABLED", False):
+                token = cfg["remote"].get("NGROK_AUTH_TOKEN")
+                if token: ngrok.set_auth_token(token)
+                
+                public_url = ngrok.connect(8050).public_url
+                logger.info(f"🚀 REMOTE STREAM ACTIVE: {public_url}")
+                with open("stream_url.txt", "w") as f:
+                    f.write(public_url)
+    except Exception as e:
+        logger.error(f"Ngrok failed: {e}")
 
 def run_dash():
     # Run Dash server in production mode (waitress/werkzeug without debug to prevent reloading)
@@ -21,6 +38,9 @@ def run_listener():
     manager.run()
 
 if __name__ == '__main__':
+    # Start Ngrok if enabled
+    start_ngrok()
+    
     # Start the backend listener
     listener_thread = threading.Thread(target=run_listener, daemon=True)
     listener_thread.start()
