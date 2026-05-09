@@ -131,6 +131,11 @@ class TelemetryManager:
             df['AirTemp']      = self._latest_session.get('AirTemp', 0)
             df['TotalLaps']    = self._latest_session.get('TotalLaps', 0)
             df['SafetyCarStatus'] = self._latest_session.get('SafetyCarStatus', 0)
+            
+            # Store forecasts in shared_state directly for the radar
+            if 'Forecasts' in self._latest_session:
+                import shared_state
+                shared_state.latest_forecasts = self._latest_session['Forecasts']
 
         # ── Competitors (gaps) ────────────────────────────────────────────────
         if self._latest_competitors:
@@ -203,6 +208,9 @@ class TelemetryManager:
         logger.info(f"Lap {lap_num} completed. Time: {total}ms")
 
         self.data_service.save_lap(lap_num, s1, s2, total, ts)
+
+        import shared_state
+        shared_state.set_lap_completed(lap_num, total)
 
         threading.Thread(target=run_ml_analysis_pass, daemon=True).start()
 

@@ -55,7 +55,10 @@ def register_callbacks(app):
             plots = TelemetryPlots()
             speed_fig = plots.create_speed_plot(df)
             pedal_fig = plots.create_pedal_plot(df)
-            track_fig = plots.create_track_map(path_df)
+            
+            # Fetch Best Lap for Ghost Car
+            best_lap_df = pd.DataFrame(shared_state.get_best_lap_data())
+            track_fig = plots.create_track_map(path_df, best_lap_df=best_lap_df)
             
             latest = df.iloc[-1]
             speed_val = f"{int(latest.get('Speed', 0))}"
@@ -411,4 +414,91 @@ def register_callbacks(app):
             strategy = [html.Div("No live data available.", style={'color': '#8e8e93'})]
 
         return [feedback_items, strategy]
+
+    @app.callback(
+        Output('export-motec-status', 'children'),
+        [Input('btn-export-motec', 'n_clicks')],
+        prevent_initial_call=True
+    )
+    def trigger_motec_export(n):
+        if not n: return ""
+        try:
+            import shared_state
+            from services.exporter import ExportService
+            
+            # Combine all completed laps into one big DataFrame
+            laps = shared_state.get_completed_lap_numbers()
+            all_data = []
+            for l in laps:
+                all_data.extend(shared_state.get_completed_lap_data(l))
+            
+            if not all_data:
+                return "No completed laps to export yet."
+            
+            df = pd.DataFrame(all_data)
+            service = ExportService()
+            filename = service.export_to_motec(df)
+            
+            if filename:
+                return f"Successfully exported to {filename}"
+            else:
+                return "Export failed (empty data)."
+        except Exception as e:
+            return f"Export Error: {e}"
+
+    @app.callback(
+        [Output('strat-planner-output', 'children'),
+         Output('weather-radar-graph', 'figure')],
+        [Input('update-interval', 'n_intervals'),
+         Input('strat-pit-1', 'value'),
+         Input('strat-pit-2', 'value')]
+    )
+    def update_strategy_planning(n, pit1, pit2):
+        # 1. Weather Radar
+        radar_fig = {}
+        try:
+            import shared_state
+            radar_fig = TelemetryPlots.create_weather_radar_plot(shared_state.latest_forecasts)
+        except Exception: pass
+        
+        # 2. Strategy Engine
+        try:
+            import shared_state
+            chunk_data, _ = shared_state.get_telemetry()
+            if not chunk_data: return ["Waiting for data...", radar_fig]
+            
+            latest = chunk_data[-1]
+            total_laps = int(latest.get('TotalLaps', 50))
+            if total_laps == 0: total_laps = 50
+            
+            # Simulation parameters
+            base_lap = 90.0
+            deg_rate = 0.12 # seconds added per lap of age
+            pit_loss = 23.5 # seconds
+            
+            def calc_total_time(pits):
+                pits = [p for p in pits if p is not None and 0 < p < total_laps]
+                time = 0
+                age = 0
+                for l in range(1, total_laps + 1):
+                    time += base_lap + (age * deg_rate)
+                    age += 1
+                    if l in pits:
+                        time += pit_loss
+                        age = 0
+                return time
+            
+            t_custom = calc_total_time([pit1, pit2])
+            # Default 1-stop comparison
+            t_opt = calc_total_time([total_laps // 2])
+            
+            diff = t_custom - t_opt
+            if diff < 0.1:
+                msg = f"Strateji: {int(t_custom//60)}dk {int(t_custom%60)}sn (Optimal!)"
+            else:
+                msg = f"Strateji: {int(t_custom//60)}dk {int(t_custom%60)}sn (+{diff:.1f}sn yavaş)"
+                
+            return [msg, radar_fig]
+        except Exception as e:
+            return [f"Error: {e}", radar_fig]
 

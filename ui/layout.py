@@ -115,6 +115,11 @@ def create_analysis_tab():
                 dcc.Dropdown(id='compare-lap-2', placeholder="Select Lap B", style={'flex': '1', 'color': '#000'})
             ]),
             dcc.Graph(id='compare-graph')
+        ]),
+        html.Div(className='card', style={'marginTop': '20px'}, children=[
+            html.Div("Export Analysis", className='card-title'),
+            html.Button("Export Current Session to MoTeC (CSV)", id='btn-export-motec', className='btn-primary'),
+            html.Div(id='export-motec-status', style={'marginTop': '10px', 'color': '#00d2be'})
         ])
     ])
 
@@ -127,6 +132,22 @@ def create_strategy_tab():
         html.Div(className='card', children=[
             html.Div("Strategy Recommendations", className='card-title'),
             html.Div(id='strategy-recommendations')
+        ]),
+        html.Div(className='row', style={'display': 'flex', 'gap': '20px'}, children=[
+            html.Div(className='card', style={'flex': '1'}, children=[
+                html.Div("Interactive Strategy Planner", className='card-title'),
+                html.Div(style={'display': 'flex', 'alignItems': 'center', 'gap': '10px', 'marginBottom': '10px'}, children=[
+                    html.Label("Pit 1 Lap:", style={'color': '#8e8e93'}),
+                    dcc.Input(id='strat-pit-1', type='number', value=15, style={'width': '60px', 'backgroundColor': '#1a1b1e', 'color': '#fff', 'border': '1px solid #2c2d33'}),
+                    html.Label("Pit 2 Lap:", style={'color': '#8e8e93'}),
+                    dcc.Input(id='strat-pit-2', type='number', value=35, style={'width': '60px', 'backgroundColor': '#1a1b1e', 'color': '#fff', 'border': '1px solid #2c2d33'}),
+                ]),
+                html.Div(id='strat-planner-output', style={'color': '#00d2be', 'fontWeight': 'bold', 'marginBottom': '10px'})
+            ]),
+            html.Div(className='card', style={'flex': '1'}, children=[
+                html.Div("Rain Radar (30m Forecast)", className='card-title'),
+                dcc.Graph(id='weather-radar-graph', config={'displayModeBar': False}, style={'height': '150px'})
+            ])
         ])
     ])
 

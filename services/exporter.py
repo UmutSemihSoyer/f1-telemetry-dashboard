@@ -86,6 +86,57 @@ class ExportService:
         # Save output
         pdf.output(f"session_report_{ts}.pdf")
 
+    def export_to_motec(self, df):
+        if df is None or df.empty:
+            return None
+        
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"motec_export_{ts}.csv"
+        
+        # MoTeC i2 compatible headers and units
+        mapping = {
+            'Timestamp': 'Time',
+            'LapDistance': 'Distance',
+            'Speed': 'Speed',
+            'Throttle': 'Throttle',
+            'Brake': 'Brake',
+            'Gear': 'Gear',
+            'RPM': 'RPM',
+            'Steer': 'Steering Angle',
+            'PosX': 'PosX',
+            'PosZ': 'PosZ',
+            'GLat': 'G Force Lat',
+            'GLon': 'G Force Lon'
+        }
+        
+        # Rename columns that exist
+        export_df = df.rename(columns=mapping)
+        cols_to_keep = [v for v in mapping.values() if v in export_df.columns]
+        export_df = export_df[cols_to_keep]
+        
+        # Create the units row
+        units = {
+            'Time': 's',
+            'Distance': 'm',
+            'Speed': 'km/h',
+            'Throttle': '%',
+            'Brake': '%',
+            'Gear': '',
+            'RPM': 'rpm',
+            'Steering Angle': 'deg',
+            'PosX': 'm',
+            'PosZ': 'm',
+            'G Force Lat': 'G',
+            'G Force Lon': 'G'
+        }
+        
+        unit_row = pd.DataFrame([units], columns=cols_to_keep)
+        
+        # Final combine
+        final_df = pd.concat([unit_row, export_df], ignore_index=True)
+        final_df.to_csv(filename, index=False)
+        return filename
+
 def run_export():
     """
     Stand-alone export trigger reading from local sqlite.

@@ -89,7 +89,7 @@ class TelemetryPlots:
         return fig
 
     @staticmethod
-    def create_track_map(df):
+    def create_track_map(df, best_lap_df=None):
         fig = go.Figure()
         
         if df is None or df.empty or 'PosX' not in df.columns or 'PosZ' not in df.columns:
@@ -104,13 +104,27 @@ class TelemetryPlots:
             name='Track'
         ))
         
+        # Ghost Car Position (Best Lap)
+        if best_lap_df is not None and not best_lap_df.empty:
+            current_dist = df['LapDistance'].iloc[-1]
+            diffs = (best_lap_df['LapDistance'] - current_dist).abs()
+            ghost_idx = diffs.idxmin()
+            ghost_pt = best_lap_df.loc[ghost_idx]
+            
+            fig.add_trace(go.Scatter(
+                x=[ghost_pt['PosX']], y=[ghost_pt['PosZ']],
+                mode='markers',
+                marker=dict(size=12, color='rgba(155, 0, 239, 0.4)', symbol='circle'),
+                name='Ghost (Best Lap)'
+            ))
+
         # Current position marker
         if len(df) > 0:
             fig.add_trace(go.Scatter(
                 x=[df['PosX'].iloc[-1]], y=[df['PosZ'].iloc[-1]],
                 mode='markers',
-                marker=dict(size=12, color='#ff1801', symbol='triangle-up'),
-                name='Current Pos'
+                marker=dict(size=14, color='#ff1801', symbol='circle'),
+                name='Live Car'
             ))
             
         fig.update_layout(
@@ -201,4 +215,33 @@ class TelemetryPlots:
         )
         # Fix xaxis titles
         fig.update_xaxes(title_text="Lap Distance (m)", row=2, col=1)
+        return fig
+
+    @staticmethod
+    def create_weather_radar_plot(forecasts):
+        fig = go.Figure()
+        
+        if not forecasts:
+            fig.update_layout(title="No Forecast Data", **PLOTLY_DARK['layout'])
+            return fig
+            
+        times = [f['TimeOffset'] for f in forecasts]
+        rains = [f['RainPct'] for f in forecasts]
+        
+        # Color bar based on rain percentage
+        colors = ['#00d2be' if r < 20 else '#ff1801' if r > 70 else '#e1e1e1' for r in rains]
+        
+        fig.add_trace(go.Bar(
+            x=times, y=rains,
+            marker_color=colors,
+            name='Rain %'
+        ))
+        
+        fig.update_layout(
+            margin=dict(l=20, r=20, t=30, b=20),
+            height=150,
+            yaxis=dict(title="Rain %", range=[0, 100]),
+            xaxis=dict(title="Minutes Ahead"),
+            **PLOTLY_DARK['layout']
+        )
         return fig

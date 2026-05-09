@@ -66,7 +66,7 @@ class TelemetryListener:
             u = struct.unpack(fmt, data[start:start+60])
             self.data_queue.put({
                 'Type': 'Telemetry', 'Timestamp': session_time,
-                'Speed': u[0], 'Throttle': u[1], 'Brake': u[3], 'Gear': u[5], 'RPM': u[6],
+                'Speed': u[0], 'Throttle': u[1], 'Steer': u[2], 'Brake': u[3], 'Gear': u[5], 'RPM': u[6],
                 'DRS': u[7],
                 'BrakeTempRL': u[10], 'BrakeTempRR': u[11], 'BrakeTempFL': u[12], 'BrakeTempFR': u[13],
                 'TyreSurfRL': u[14], 'TyreSurfRR': u[15], 'TyreSurfFL': u[16], 'TyreSurfFR': u[17],
@@ -165,15 +165,29 @@ class TelemetryListener:
             prefix_size = struct.calcsize(fmt)
             u = struct.unpack(fmt, data[24:24+prefix_size])
             
-            # Safety car status is deep in the packet
-            safety_offset = 24 + prefix_size + (21 * 5)
-            safety = struct.unpack_from('<B', data, safety_offset)[0]
+            # Safety car status and Weather Forecast
+            # Offset map: 24 (header) + 19 (prefix) + 105 (21 marshal zones)
+            base_offset = 24 + prefix_size + (21 * 5)
+            safety = struct.unpack_from('<B', data, base_offset)[0]
+            
+            num_forecasts = struct.unpack_from('<B', data, base_offset + 2)[0]
+            forecasts = []
+            for i in range(min(num_forecasts, 8)): # Take first 8 samples for the radar
+                f_offset = base_offset + 3 + (i * 8)
+                # m_sessionType, m_timeOffset, m_weather, m_trackTemp, m_trackTempChange, m_airTemp, m_airTempChange, m_rainPct
+                fs = struct.unpack_from('<BBBbBbBB', data, f_offset)
+                forecasts.append({
+                    'TimeOffset': fs[1],
+                    'Weather': fs[2],
+                    'RainPct': fs[7]
+                })
             
             self.data_queue.put({
                 'Type': 'Session', 'Timestamp': session_time,
                 'Weather': u[0], 'TrackTemp': u[1], 'AirTemp': u[2],
                 'TotalLaps': u[3], 'SessionType': u[5], 'SessionTimeLeft': u[8],
-                'SafetyCarStatus': safety
+                'SafetyCarStatus': safety,
+                'Forecasts': forecasts
             })
 
     def stop(self):

@@ -8,6 +8,13 @@ state_lock = threading.Lock()
 # ML Models
 tyre_model = TyreDegradationModel()
 
+# Best Lap Tracking
+best_lap_time = 9999999.0  # ms
+best_lap_data = []
+
+# Weather Forecasts
+latest_forecasts = []
+
 # The latest full telemetry chunk (list of dicts)
 latest_telemetry_chunk = []
 
@@ -73,4 +80,16 @@ def get_completed_lap_data(lap_num):
     with state_lock:
         lap_data = completed_laps_data.get(int(lap_num))
         return list(lap_data) if lap_data else []
+
+def set_lap_completed(lap_num, lap_time_ms):
+    global best_lap_time, best_lap_data
+    with state_lock:
+        lap_data = completed_laps_data.get(int(lap_num))
+        if lap_data and lap_time_ms > 0 and lap_time_ms < best_lap_time:
+            best_lap_time = lap_time_ms
+            best_lap_data = list(lap_data)
+
+def get_best_lap_data():
+    with state_lock:
+        return list(best_lap_data)
 
