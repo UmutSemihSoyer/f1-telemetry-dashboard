@@ -12,6 +12,19 @@ an interactive multi-tab dashboard with voice alerts.
 > telemetry format. For F1 23/24, the packet unpacking logic in `core/listener.py` must be
 > updated per the official EA/Codemasters specification.
 
+## 📸 Dashboard Preview
+
+![Live HUD & Track Map](assets/dashboard_demo.webp)
+
+**Live HUD:**
+![Live HUD](assets/live_hud.png)
+
+**Data Analysis:**
+![Data Analysis](assets/data_analysis.png)
+
+**Strategy & Race Engineer:**
+![Strategy](assets/strategy.png)
+
 ---
 
 ## ✨ Features

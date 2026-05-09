@@ -27,17 +27,22 @@ def register_callbacks(app):
          Output('fuel-prediction', 'children'),
          Output('live-delta-value', 'children'),
          Output('live-delta-value', 'style'),
-         Output('live-delta-bar-inner', 'style')],
+         Output('live-delta-bar-inner', 'style'),
+         Output('live-ers-value', 'children'),
+         Output('live-ers-bar', 'style'),
+         Output('live-gap-ahead', 'children'),
+         Output('live-gap-behind', 'children')],
         [Input('update-interval', 'n_intervals')]
     )
     def update_live_data(n):
+        _empty = [{}, {}, {}, "0", "0.0", "No data", "0.00", {}, {}, "0", {}, "--", "--"]
         if not Path("live_data.json").exists():
-            return [{}, {}, {}, "0", "0.0", "No data", "0.00", {}, {}]
+            return _empty
         
         try:
             df = pd.read_json("live_data.json")
             if df.empty:
-                return [{}, {}, {}, "0", "0.0", "No data", "0.00", {}, {}]
+                return _empty
             
             # --- TELEMETRY PLOTS ---
             plots = TelemetryPlots()
@@ -93,30 +98,102 @@ def register_callbacks(app):
                         }
 
             delta_str = f"{'+' if delta > 0 else ''}{delta:.2f}"
-            
-            return [speed_fig, pedal_fig, track_fig, speed_val, fuel_val, fuel_msg, delta_str, delta_style, bar_style]
+
+            # --- ERS ---
+            # ERS is stored in Joules (max ~4,000,000 J)
+            ers_j       = latest.get('ERS', 0)
+            ers_pct     = min(100, int(ers_j / 40000))   # 4 MJ = 100%
+            ers_color   = '#9b00ef' if ers_pct > 30 else '#ff1801'
+            ers_bar_style = {
+                'height': '100%',
+                'width':  f'{ers_pct}%',
+                'backgroundColor': ers_color,
+                'transition': 'width 0.3s'
+            }
+
+            # --- Gaps ---
+            gap_ahead  = latest.get('GapAhead', 0.0)
+            gap_behind = latest.get('GapBehind', 0.0)
+            gap_ahead_str  = f"{gap_ahead:.2f}"  if gap_ahead  > 0 else "--"
+            gap_behind_str = f"{gap_behind:.2f}" if gap_behind > 0 else "--"
+
+            return [
+                speed_fig, pedal_fig, track_fig,
+                speed_val, fuel_val, fuel_msg,
+                delta_str, delta_style, bar_style,
+                str(ers_pct), ers_bar_style,
+                gap_ahead_str, gap_behind_str
+            ]
             
         except Exception as e:
-            return [{}, {}, {}, "ERR", "0.0", f"Error: {str(e)}", "0.00", {}, {}]
+            return [{}, {}, {}, "ERR", "0.0", f"Error: {str(e)}", "0.00", {}, {}, "0", {}, "--", "--"]
 
     @app.callback(
         [Output('analysis-gforce-map', 'figure'),
-         Output('analysis-tire-wear', 'figure')],
+         Output('analysis-tire-wear', 'figure'),
+         Output('lap-history-table', 'children')],
         [Input('update-interval', 'n_intervals')],
         [Input('main-tabs', 'value')]
     )
     def update_analysis_tab(n, active_tab):
-        if active_tab != 'analysis' or not Path("live_data.json").exists():
-            return [{}, {}]
-        
+        if active_tab != 'analysis':
+            return [{}, {}, ""]
+
+        gforce_fig = {}
+        tire_fig   = {}
+        lap_table  = html.Div("No lap data available.", style={'color': '#8e8e93'})
+
+        if Path("live_data.json").exists():
+            try:
+                df = pd.read_json("live_data.json")
+                if not df.empty:
+                    plots = TelemetryPlots()
+                    gforce_fig = plots.create_g_force_plot(df)
+                    tire_fig   = plots.create_tire_wear_plot(df)
+            except Exception:
+                pass
+
         try:
-            df = pd.read_json("live_data.json")
-            plots = TelemetryPlots()
-            g_fig = plots.create_g_force_plot(df)
-            t_fig = plots.create_tire_wear_plot(df)
-            return [g_fig, t_fig]
-        except Exception:
-            return [{}, {}]
+            import sqlite3
+            conn = sqlite3.connect("telemetry.db")
+            laps_df = pd.read_sql_query(
+                "SELECT lap_num, lap_time_ms, sector1_ms, sector2_ms "
+                "FROM session_history ORDER BY lap_num DESC LIMIT 15", conn
+            )
+            conn.close()
+
+            if not laps_df.empty:
+                rows = []
+                # Header
+                rows.append(html.Tr([
+                    html.Th("Lap", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'textAlign': 'left'}),
+                    html.Th("Time", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'textAlign': 'left'}),
+                    html.Th("S1", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'textAlign': 'left'}),
+                    html.Th("S2", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'textAlign': 'left'}),
+                    html.Th("S3", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'textAlign': 'left'})
+                ]))
+
+                for _, row in laps_df.iterrows():
+                    lap_ms = int(row['lap_time_ms'])
+                    s1 = int(row['sector1_ms'])
+                    s2 = int(row['sector2_ms'])
+                    s3 = max(0, lap_ms - s1 - s2)
+
+                    time_str = f"{lap_ms//60000}:{(lap_ms%60000)/1000:06.3f}"
+                    rows.append(html.Tr([
+                        html.Td(str(row['lap_num']), style={'padding': '8px', 'borderBottom': '1px solid #2c2d33'}),
+                        html.Td(time_str, style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'color': '#00d2be'}),
+                        html.Td(f"{s1/1000:.3f}", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33'}),
+                        html.Td(f"{s2/1000:.3f}", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33'}),
+                        html.Td(f"{s3/1000:.3f}", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33'})
+                    ]))
+
+                lap_table = html.Table(rows, style={'width': '100%', 'borderCollapse': 'collapse'})
+
+        except Exception as e:
+            lap_table = html.Div(f"Could not load history: {e}", style={'color': '#8e8e93'})
+
+        return [gforce_fig, tire_fig, lap_table]
 
     @app.callback(
         [Output('engineer-feedback-list', 'children'),
@@ -127,20 +204,70 @@ def register_callbacks(app):
     def update_strategy_tab(n, active_tab):
         if active_tab != 'strategy':
             return [[], []]
-            
+
+        # --- Race Engineer Feedback ---
         feedback_items = []
         if Path("engineer_feedback.json").exists():
             with open("engineer_feedback.json", "r", encoding="utf-8") as f:
                 report = json.load(f)
                 for msg in report.get("all_feedback", []):
-                    feedback_items.append(html.Div(f"📻 {msg}", style={'padding': '5px', 'borderBottom': '1px solid #2c2d33'}))
-        
+                    feedback_items.append(
+                        html.Div(f"📻 {msg}", style={'padding': '5px', 'borderBottom': '1px solid #2c2d33'})
+                    )
+
         if not feedback_items:
             feedback_items = [html.Div("No feedback available for this lap.", style={'color': '#8e8e93'})]
-            
-        # Mock strategy advice for now
-        strategy = [
-            html.Div("⛽ Plan: Standard fuel mixture. Pit on Lap 18 recommended.", style={'color': '#00d2be'})
-        ]
-        
+
+        # --- Real Strategy Recommendations ---
+        strategy = []
+        if Path("live_data.json").exists():
+            try:
+                from analytics_physics import fuel_deficit_analysis, dynamic_pit_loss
+
+                df = pd.read_json("live_data.json")
+                if not df.empty:
+                    latest     = df.iloc[-1]
+                    fuel_kg    = latest.get('Fuel', 0)
+                    fuel_laps  = latest.get('FuelLaps', 0)
+                    total_laps = int(latest.get('TotalLaps', 50))
+                    lap_num    = int(latest.get('LapNum', 0))
+                    sc_status  = int(latest.get('SafetyCarStatus', 0))
+                    weather    = int(latest.get('Weather', 0))
+
+                    fuel_info = fuel_deficit_analysis(fuel_kg, fuel_laps, total_laps, lap_num)
+                    pit_info  = dynamic_pit_loss(sc_status, weather)
+
+                    if fuel_info['is_sufficient']:
+                        fuel_color = '#00d2be'
+                        fuel_text  = (f"Fuel OK — {fuel_info['surplus_laps']:.1f} laps surplus "
+                                      f"({fuel_kg:.1f} kg remaining)")
+                    else:
+                        fuel_color = '#ff1801'
+                        fuel_text  = (f"FUEL SHORT by {fuel_info['deficit_kg']:.2f} kg — "
+                                      f"save {fuel_info['save_pct_needed']:.1f}% per lap")
+
+                    strategy.append(html.Div(f"⛽ {fuel_text}",
+                        style={'color': fuel_color, 'padding': '5px',
+                               'borderBottom': '1px solid #2c2d33'}))
+
+                    sc_label  = {0: "Normal", 1: "Safety Car", 2: "VSC"}.get(sc_status, "Normal")
+                    pit_color = '#00d2be' if pit_info['is_window_optimal'] else '#8e8e93'
+                    strategy.append(html.Div(
+                        f"🔧 Pit Loss: {pit_info['dynamic_loss_sec']:.1f}s ({sc_label} conditions)",
+                        style={'color': pit_color, 'padding': '5px',
+                               'borderBottom': '1px solid #2c2d33'}))
+
+                    laps_rem = max(0, total_laps - lap_num)
+                    strategy.append(html.Div(
+                        f"🏁 Laps Remaining: {laps_rem} / {total_laps}",
+                        style={'color': '#e1e1e1', 'padding': '5px'}))
+
+            except Exception as e:
+                strategy.append(html.Div(f"Strategy data unavailable: {e}",
+                                         style={'color': '#8e8e93'}))
+
+        if not strategy:
+            strategy = [html.Div("No live data available.", style={'color': '#8e8e93'})]
+
         return [feedback_items, strategy]
+

@@ -43,11 +43,41 @@ def create_live_hud():
                     html.Div(id='fuel-prediction', style={'marginTop': '10px', 'fontSize': '0.9rem'})
                 ]),
                 html.Div(className='card', children=[
+                    html.Div("ERS Battery", className='card-title'),
+                    html.Div(className='indicator-value', children=[
+                        html.Span(id='live-ers-value', children="0"),
+                        html.Span("%", className='indicator-unit')
+                    ]),
+                    html.Div(id='live-ers-bar-wrap', style={
+                        'height': '8px', 'width': '100%', 'backgroundColor': '#2c2d33',
+                        'borderRadius': '4px', 'marginTop': '10px', 'overflow': 'hidden'
+                    }, children=[
+                        html.Div(id='live-ers-bar', style={
+                            'height': '100%', 'width': '0%',
+                            'backgroundColor': '#9b00ef', 'transition': 'width 0.3s'
+                        })
+                    ])
+                ]),
+                html.Div(className='card', children=[
+                    html.Div("Gap to Car Ahead", className='card-title'),
+                    html.Div(className='indicator-value', children=[
+                        html.Span(id='live-gap-ahead', children="--"),
+                        html.Span("s", className='indicator-unit')
+                    ])
+                ]),
+                html.Div(className='card', children=[
+                    html.Div("Gap to Car Behind", className='card-title'),
+                    html.Div(className='indicator-value', children=[
+                        html.Span(id='live-gap-behind', children="--"),
+                        html.Span("s", className='indicator-unit')
+                    ])
+                ]),
+                html.Div(className='card', children=[
                     html.Div("Live Delta", className='card-title'),
                     html.Div(id='live-delta-container', style={'textAlign': 'center'}, children=[
                         html.Div(id='live-delta-value', className='indicator-value', children="0.00"),
                         html.Div(id='live-delta-bar', style={
-                            'height': '10px', 'width': '100%', 'backgroundColor': '#2c2d33', 
+                            'height': '10px', 'width': '100%', 'backgroundColor': '#2c2d33',
                             'borderRadius': '5px', 'marginTop': '10px', 'overflow': 'hidden'
                         }, children=[
                             html.Div(id='live-delta-bar-inner', style={'height': '100%', 'width': '50%', 'transition': 'all 0.2s'})
@@ -64,11 +94,7 @@ def create_live_hud():
 
 def create_analysis_tab():
     return html.Div(className='main-container', children=[
-        html.Div(className='card', children=[
-            html.Div("Lap Comparison Analysis", className='card-title'),
-            html.P("Comparing current lap performance vs Personal Best.")
-        ]),
-        html.Div(className='row', style={'display': 'flex', 'gap': '20px'}, children=[
+        html.Div(className='row', style={'display': 'flex', 'gap': '20px', 'marginBottom': '20px'}, children=[
             html.Div(className='card', style={'flex': '1'}, children=[
                 html.Div("G-Force Distribution", className='card-title'),
                 dcc.Graph(id='analysis-gforce-map')
@@ -77,6 +103,10 @@ def create_analysis_tab():
                 html.Div("Tyre Thermal State", className='card-title'),
                 dcc.Graph(id='analysis-tire-wear')
             ])
+        ]),
+        html.Div(className='card', children=[
+            html.Div("Lap History", className='card-title'),
+            html.Div(id='lap-history-table')
         ])
     ])
 

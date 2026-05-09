@@ -3,7 +3,7 @@ import sys
 import time
 
 print("=" * 50)
-print("🏎️  F1 2022 Telemetry Suite Starting...")
+print("F1 2022 Telemetry Suite Starting...")
 print("=" * 50)
 
 try:
@@ -18,17 +18,17 @@ try:
     print("[3/3] Starting Live Dashboard (web interface)...")
     dashboard = subprocess.Popen([sys.executable, "dashboard.py"])
 
-    print("\n✅ All systems active!")
-    print("🌍 Open http://127.0.0.1:8050 in your browser to view live data.")
-    print("\n🛑 Press CTRL+C in this terminal to shut down all services.\n")
+    print("\nAll systems active!")
+    print("Open http://127.0.0.1:8050 in your browser to view live data.")
+    print("\nPress CTRL+C in this terminal to shut down all services.\n")
 
     while True:
         time.sleep(1)
 
 except KeyboardInterrupt:
-    print("\n🛑 Shutdown signal received (CTRL+C). Stopping services...")
+    print("\nShutdown signal received (CTRL+C). Stopping services...")
     if sender:
         sender.terminate()
     listener.terminate()
     dashboard.terminate()
-    print("👋 All services stopped successfully.")
+    print("All services stopped successfully.")

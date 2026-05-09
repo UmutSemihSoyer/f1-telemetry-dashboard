@@ -82,7 +82,7 @@ while True:
         mot_cars+=struct.pack(MOTION_FMT,
             pos_x,0.,pos_z, 0.,0.,0., 0,0,32767,0,32767,0,
             g_lat,g_lon,0., 0.,0.,0.) if i==0 else bytes(60)
-    sock.sendto(hdr(0)+mot_cars+bytes(36*4+4),(UDP_IP,UDP_PORT))
+    sock.sendto(hdr(0)+mot_cars+bytes(120),(UDP_IP,UDP_PORT))
 
     # ---- PACKET 6: FULL TELEMETRY (60 bytes each car) ----
     # <HfffBbHBBHHHHHBBBBBBBBHffffBBBB>

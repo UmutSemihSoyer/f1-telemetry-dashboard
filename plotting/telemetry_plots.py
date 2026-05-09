@@ -49,17 +49,18 @@ class TelemetryPlots:
 
     @staticmethod
     def create_tire_wear_plot(df):
-        # Taking the latest values for tire wear
         latest = df.iloc[-1]
-        tires = ['FL', 'FR', 'RL', 'RR']
-        values = [latest.get(f'Wear{t}', 0) for t in tires]
-        
+        tires  = ['FL', 'FR', 'RL', 'RR']
+        values = [latest.get(f'TyreWear{t}', 0) for t in tires]
+
         fig = go.Figure(data=[
-            go.Bar(x=tires, y=values, marker_color=['#00d2be', '#00d2be', '#9b00ef', '#9b00ef'])
+            go.Bar(x=tires, y=values,
+                   marker_color=['#00d2be', '#00d2be', '#9b00ef', '#9b00ef'])
         ])
         fig.update_layout(title="Tyre Wear (%)", **PLOTLY_DARK['layout'])
         fig.update_yaxes(range=[0, 100])
         return fig
+
 
     @staticmethod
     def create_g_force_plot(df):
