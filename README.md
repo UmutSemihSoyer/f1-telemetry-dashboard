@@ -118,3 +118,15 @@ The **Aero Analyzer** estimates downforce loss when following a car within 0.7s.
 
 ## 📄 License
 MIT License — © 2026 Umut Semih Soyer
+
+---
+
+## 🗺️ Roadmap & Professional Future
+- [ ] **Mobile Companion App:** Flutter-based dashboard for iPad/Android tablets.
+- [ ] **PostgreSQL Sync:** Cloud database integration for worldwide statistics.
+- [ ] **Real-time 3D Rendering:** Migration to Three.js for smoother track visualizations.
+- [ ] **Hardware API:** Native support for Fanatec/Logitech LED wheels.
+
+## 🤝 Contributing
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before submitting a Pull Request.
+

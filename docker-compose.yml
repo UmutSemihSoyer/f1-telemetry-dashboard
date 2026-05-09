@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  pitwall:
+    build: .
+    ports:
+      - "8050:8050"
+      - "20777:20777/udp"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
