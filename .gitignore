@@ -1,32 +1,47 @@
+# ============================================================
+# F1 2022 UDP Telemetry Dashboard — .gitignore
+# ============================================================
+
+# --- Python ---
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
 
-# IDE / OS
+# --- IDE / OS ---
 .vscode/
 .idea/
 .DS_Store
+Thumbs.db
 *.swp
 *.swo
 
-# Virtual Environment
+# --- Virtual Environment ---
 venv/
 env/
 .venv/
+.env
 
-# Caches
+# --- Caches ---
 .ergast_cache/
 .pytest_cache/
 
-# Databases & Logs
+# --- Databases & Logs ---
 *.db
 *.sqlite3
 telemetry.db
 fails.txt
 test_results.txt
-tr*.txt
 
-# Temp / Generated Files
+# --- Temporary / Dev Scratch Files ---
+tr.txt
+tr2.txt
+tr3.txt
+tr4.txt
+read_docx_temp.py
+verify_v7.py
+
+# --- Generated Session Files (runtime outputs) ---
 session_*.csv
 session_*.pdf
 test_export.pdf
@@ -35,7 +50,18 @@ braking_points.json
 optimal_braking.json
 competitors.json
 alerts.json
+engineer_feedback.json
+best_lap_telemetry.json
 
-# Exclude random heavy files
-*.docx
+# --- Unrelated / Accidental Directories ---
 RedditApk/
+
+# --- Spec Docs (large, not needed by users) ---
+f1_2022_spec.txt
+f1_2022_spec_utf8.txt
+
+# --- Word Docs ---
+*.docx
+
+# --- Config (use config.example.json instead) ---
+# config.json   <- intentionally tracked so the app works out of the box

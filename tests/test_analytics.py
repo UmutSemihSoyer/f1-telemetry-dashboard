@@ -1,6 +1,6 @@
 """
-tests/test_analytics.py — F1 2022 Telemetri Analitik Test Suiti
-pytest ile calistir: cd udp_telemetry && pytest tests/ -v
+tests/test_analytics.py — F1 2022 Telemetry Analytics Test Suite
+Run with: cd udp_telemetry && pytest tests/ -v
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -21,7 +21,7 @@ from ml_analysis import calculate_lap_consistency
 
 
 # ════════════════════════════════════════════════════════════
-# YAKIT YUK HESAPLAYICISI
+# FUEL LOAD CALCULATOR
 # ════════════════════════════════════════════════════════════
 class TestFuelLoad:
     def test_base_fuel_correct(self):
@@ -56,7 +56,7 @@ class TestFuelLoad:
 
 
 # ════════════════════════════════════════════════════════════
-# BRAKING DISTANCE
+# BRAKING DISTANCE CALCULATOR
 # ════════════════════════════════════════════════════════════
 class TestBrakingDistance:
     def test_standard_braking(self):
@@ -96,6 +96,7 @@ class TestBrakingDistance:
 # ════════════════════════════════════════════════════════════
 # TYRE THERMAL MODEL
 # ════════════════════════════════════════════════════════════
+
 class TestTyreThermal:
     def test_braking_heats_tyre(self):
         m = TyreThermalModel(80, 22)
@@ -137,9 +138,9 @@ class TestTyreThermal:
 
     def test_status_strings(self):
         m = TyreThermalModel(55, 22)
-        assert m.status == "Soguk"
+        assert m.status == "Cold"
         m.T = 95; assert m.status == "Optimal"
-        m.T = 145; assert m.status == "ASIRI SICAK"
+        m.T = 145; assert m.status == "OVERHEATING"
 
     def test_simulate_lap(self):
         speeds = [200, 100, 50, 200, 300] * 20
@@ -153,6 +154,7 @@ class TestTyreThermal:
 # ════════════════════════════════════════════════════════════
 # OVERTAKE OPPORTUNITY WINDOW
 # ════════════════════════════════════════════════════════════
+
 class TestOvertakeWindow:
     def test_high_wear_diff_high_opportunity(self):
         r = calculate_overtake_window(20, 75, 0.5, 90)
@@ -183,6 +185,7 @@ class TestOvertakeWindow:
 # ════════════════════════════════════════════════════════════
 # FUEL DEFICIT ANALYSIS
 # ════════════════════════════════════════════════════════════
+
 class TestFuelDeficit:
     def test_sufficient_fuel(self):
         # 10 kg fuel, burns 0.9kg/lap (fuel_laps=11.1), needs 47*0.9=42.3kg for 47 laps
@@ -215,6 +218,7 @@ class TestFuelDeficit:
 # ════════════════════════════════════════════════════════════
 # LAP CONSISTENCY
 # ════════════════════════════════════════════════════════════
+
 class TestLapConsistency:
     def test_very_consistent(self):
         laps = [90000, 90050, 89980, 90020, 90010]

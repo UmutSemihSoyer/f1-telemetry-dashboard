@@ -1,8 +1,25 @@
-numpy
-pandas
-dash
-plotly
-Flask
-python-docx
-requests
-scikit-learn
+# F1 2022 UDP Telemetry Dashboard — Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Dashboard & Visualization
+dash>=2.14.0
+plotly>=5.15.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Machine Learning
+scikit-learn>=1.3.0
+
+# HTTP & API
+requests>=2.31.0
+
+# PDF Report Generation
+fpdf2>=2.7.0
+
+# Voice Alerts (TTS) — Optional: disabling via config.json voice.ENABLED=false
+pyttsx3>=2.90
+
+# Word Document Export
+python-docx>=1.1.0

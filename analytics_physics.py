@@ -1,18 +1,18 @@
 """
-analytics_physics.py — F1 2022 Fizik & Strateji Motoru
-Yakit hesaplama, fren mesafesi, lastik termal model,
-gecis firsat penceresi ve yakit acigi analizi.
+analytics_physics.py — F1 2022 Physics & Strategy Engine
+Fuel load calculation, braking distance, tyre thermal model,
+overtake opportunity window, and fuel deficit analysis.
 """
 import math
 import numpy as np
 
-CAR_MASS_KG   = 798.0   # F1 2022 minimum agirlik (kg)
-GRAVITY       = 9.81    # m/s^2
-FUEL_DENSITY  = 0.725   # kg/L (F1 benzin yogunlugu)
+CAR_MASS_KG   = 798.0   # F1 2022 minimum weight (kg)
+GRAVITY       = 9.81    # m/s²
+FUEL_DENSITY  = 0.725   # kg/L (F1 fuel density)
 
 
 # ══════════════════════════════════════════════
-# 1. YAKIT YUK HESAPLAYICISI
+# 1. FUEL LOAD CALCULATOR
 # ══════════════════════════════════════════════
 def calculate_fuel_load(
     total_laps:        int,
@@ -22,7 +22,7 @@ def calculate_fuel_load(
     formation_lap:     bool  = True
 ) -> dict:
     """
-    Yaris icin gereken yakit miktarini hesapla.
+    Calculate the required fuel load for a race.
     Returns: {base_fuel_kg, sc_buffer_kg, formation_kg, total_fuel_kg, fuel_liters}
     """
     base_fuel     = total_laps * fuel_per_lap_kg
@@ -41,7 +41,7 @@ def calculate_fuel_load(
 
 
 # ══════════════════════════════════════════════
-# 2. FREN MESAFESI HESAPLAYICISI
+# 2. BRAKING DISTANCE CALCULATOR
 # ══════════════════════════════════════════════
 def calculate_braking_distance(
     v_entry_kmh:    float,
@@ -49,8 +49,8 @@ def calculate_braking_distance(
     deceleration_g: float = 4.5
 ) -> dict:
     """
-    Kinetik enerji formuluyle fren mesafesini hesapla.
-    d = (v_entry^2 - v_corner^2) / (2 * a)
+    Calculate braking distance using kinetic energy formula.
+    d = (v_entry² - v_corner²) / (2 * a)
     """
     if v_entry_kmh <= v_corner_kmh:
         return {"distance_m": 0.0, "time_s": 0.0,
@@ -65,17 +65,17 @@ def calculate_braking_distance(
     t     = (v_in - v_out) / a
 
     return {
-        "distance_m":   round(dist, 1),
-        "time_s":       round(t, 3),
-        "decel_g":      deceleration_g,
-        "v_entry_kmh":  v_entry_kmh,
-        "v_corner_kmh": v_corner_kmh,
+        "distance_m":       round(dist, 1),
+        "time_s":           round(t, 3),
+        "decel_g":          deceleration_g,
+        "v_entry_kmh":      v_entry_kmh,
+        "v_corner_kmh":     v_corner_kmh,
         "braking_force_kn": round(CAR_MASS_KG * a / 1000, 1),
     }
 
 
 def braking_distance_sweep(v_entry_range, v_corner_kmh=80, decel_g=4.5):
-    """Farkli giris hizlari icin fren mesafesi tablo olustur."""
+    """Build a braking distance table for a range of entry speeds."""
     return [
         {"v_entry": v, **calculate_braking_distance(v, v_corner_kmh, decel_g)}
         for v in v_entry_range
@@ -87,37 +87,37 @@ def braking_distance_sweep(v_entry_range, v_corner_kmh=80, decel_g=4.5):
 # ══════════════════════════════════════════════
 class TyreThermalModel:
     """
-    Fizik tabanli lastik sicaklik modeli.
-    Enerji girdisi: frenleme kuvveti + yanal G + yol surtusmesi.
-    Sogumat: hava carpimi (hiz bagli).
+    Physics-based tyre temperature model.
+    Heat input: braking force + lateral G + road friction.
+    Cooling: airflow (speed-dependent).
     """
     def __init__(self,
-                 base_temp:   float = 80.0,
+                 base_temp:    float = 80.0,
                  ambient_temp: float = 22.0,
-                 mass_kg:     float = CAR_MASS_KG):
+                 mass_kg:      float = CAR_MASS_KG):
         self.T         = float(base_temp)
         self.T_ambient = float(ambient_temp)
         self.mass      = float(mass_kg)
 
-        # Kalibrasyon katsayilari
-        self.ALPHA_BRAKE = 1.2e-5   # J -> C (frenleme)
-        self.ALPHA_LAT   = 0.06     # G -> C (viraj)
-        self.BETA_COOL   = 0.0014   # Soguma katsayisi
+        # Calibration coefficients
+        self.ALPHA_BRAKE = 1.2e-5   # J -> °C (braking)
+        self.ALPHA_LAT   = 0.06     # G -> °C (cornering)
+        self.BETA_COOL   = 0.0014   # Cooling coefficient
 
     def step(self, speed_kmh: float, brake: float,
              lat_g: float, dt: float = 0.1) -> float:
         """
-        Modeli dt saniye ilerlet, yeni sicakligi dondur.
+        Advance the model by dt seconds, return new temperature.
         """
         v = speed_kmh / 3.6
 
-        # Frenleme enerjisi (J)
+        # Braking energy (J)
         brake_energy = 0.5 * self.mass * (v ** 2) * abs(brake) * dt
 
-        # Yanal G isi (viraj surtusmesi)
+        # Lateral G heat (cornering friction)
         lat_heat = abs(lat_g) * self.mass * v * self.ALPHA_LAT * dt
 
-        # Hava sogumasi (v artinca soguma hizlaniyor)
+        # Airflow cooling (increases with speed)
         cooling = self.BETA_COOL * (self.T - self.T_ambient) * (1 + speed_kmh / 180.0) * dt
 
         self.T += self.ALPHA_BRAKE * brake_energy + lat_heat - cooling
@@ -133,16 +133,16 @@ class TyreThermalModel:
 
     @property
     def status(self) -> str:
-        if self.T < 70:  return "Soguk"
+        if self.T < 70:  return "Cold"
         if self.T < 80:  return "Warming up"
         if self.T < 110: return "Optimal"
-        if self.T < 140: return "Sicak"
-        return "ASIRI SICAK"
+        if self.T < 140: return "Hot"
+        return "OVERHEATING"
 
 
 def simulate_lap_thermal(speed_arr, brake_arr, latg_arr, ambient=22.0, dt=0.1):
     """
-    Bir tur icin termal simulasyon calistir.
+    Run thermal simulation for a full lap.
     Returns list of temperatures per timestep.
     """
     model = TyreThermalModel(base_temp=80.0, ambient_temp=ambient)
@@ -164,30 +164,30 @@ def calculate_overtake_window(
     speed_delta_kmh:  float = 0.0
 ) -> dict:
     """
-    Gecis firsat skoru hesapla.
-    Wear farki kullanici avantaji, ERS ve hiz farki dahil.
+    Calculate an overtake opportunity score.
+    Factors: tyre wear delta, ERS deployment advantage, speed delta.
     Returns: {'opportunity': 'High'|'Medium'|'Low', ...}
     """
-    wear_diff       = max(0, target_wear_pct - player_wear_pct)  # + = hedef daha asik
-    ers_boost_s     = (player_ers_pct / 100.0) * 0.65            # ERS -> saniye avantaji
-    wear_adv_s      = wear_diff * 0.028                           # 0.028s per % diff (kural parcasi)
-    speed_adv_s     = speed_delta_kmh * 0.004                     # hiz farki -> zaman
+    wear_diff     = max(0, target_wear_pct - player_wear_pct)  # + = target more worn
+    ers_boost_s   = (player_ers_pct / 100.0) * 0.65            # ERS -> time advantage (s)
+    wear_adv_s    = wear_diff * 0.028                           # 0.028s per % wear diff
+    speed_adv_s   = speed_delta_kmh * 0.004                     # speed delta -> time
 
-    total_adv_s     = wear_adv_s + ers_boost_s + speed_adv_s
-    laps_to_catch   = gap_s / total_adv_s if total_adv_s > 0.0001 else 999.0
+    total_adv_s   = wear_adv_s + ers_boost_s + speed_adv_s
+    laps_to_catch = gap_s / total_adv_s if total_adv_s > 0.0001 else 999.0
 
-    if laps_to_catch < 5:   opportunity = "High"
+    if laps_to_catch < 5:    opportunity = "High"
     elif laps_to_catch < 15: opportunity = "Medium"
     else:                    opportunity = "Low"
 
     return {
-        "wear_diff_pct":      round(wear_diff, 1),
-        "ers_boost_s":        round(ers_boost_s, 3),
-        "wear_advantage_s":   round(wear_adv_s, 3),
-        "total_advantage_s":  round(total_adv_s, 3),
-        "laps_to_catch":      round(laps_to_catch, 1) if laps_to_catch < 999 else ">20",
-        "opportunity":        opportunity,
-        "gap_s":              round(gap_s, 3),
+        "wear_diff_pct":     round(wear_diff, 1),
+        "ers_boost_s":       round(ers_boost_s, 3),
+        "wear_advantage_s":  round(wear_adv_s, 3),
+        "total_advantage_s": round(total_adv_s, 3),
+        "laps_to_catch":     round(laps_to_catch, 1) if laps_to_catch < 999 else ">20",
+        "opportunity":       opportunity,
+        "gap_s":             round(gap_s, 3),
     }
 
 
@@ -195,22 +195,22 @@ def calculate_overtake_window(
 # 5. FUEL DEFICIT ANALYSIS
 # ══════════════════════════════════════════════
 def fuel_deficit_analysis(
-    fuel_kg:       float,
-    fuel_laps:     float,
-    total_laps:    int,
-    current_lap:   int
+    fuel_kg:     float,
+    fuel_laps:   float,
+    total_laps:  int,
+    current_lap: int
 ) -> dict:
     """
-    Yarisi tamamlamak icin yeterli yakit var mi?
-    Returns: {is_sufficient, surplus_laps, deficit, save_pct_needed}
+    Determine whether remaining fuel is sufficient to finish the race.
+    Returns: {is_sufficient, surplus_laps, deficit_kg, save_pct_needed}
     """
     laps_rem     = max(0, total_laps - current_lap)
-    rate         = fuel_kg / max(1, fuel_laps)        # kg/lap (instant)
+    rate         = fuel_kg / max(1, fuel_laps)   # kg/lap (instantaneous)
     fuel_needed  = laps_rem * rate
 
     is_ok        = fuel_kg >= fuel_needed
     deficit_kg   = max(0.0, fuel_needed - fuel_kg)
-    surplus_laps = round(fuel_laps - laps_rem, 1)     # kac tur fazla var
+    surplus_laps = round(fuel_laps - laps_rem, 1)
 
     if not is_ok and laps_rem > 0:
         save_pct = (deficit_kg / laps_rem) / rate * 100
@@ -218,20 +218,20 @@ def fuel_deficit_analysis(
         save_pct = 0.0
 
     return {
-        "fuel_kg":        round(fuel_kg, 2),
-        "laps_remaining": laps_rem,
-        "fuel_needed_kg": round(fuel_needed, 2),
-        "rate_kg_per_lap":round(rate, 3),
-        "is_sufficient":  is_ok,
-        "deficit_kg":     round(deficit_kg, 3),
-        "deficit_per_lap":round(deficit_kg / max(1, laps_rem), 4),
-        "save_pct_needed":round(save_pct, 1),
-        "surplus_laps":   surplus_laps if is_ok else 0,
+        "fuel_kg":         round(fuel_kg, 2),
+        "laps_remaining":  laps_rem,
+        "fuel_needed_kg":  round(fuel_needed, 2),
+        "rate_kg_per_lap": round(rate, 3),
+        "is_sufficient":   is_ok,
+        "deficit_kg":      round(deficit_kg, 3),
+        "deficit_per_lap": round(deficit_kg / max(1, laps_rem), 4),
+        "save_pct_needed": round(save_pct, 1),
+        "surplus_laps":    surplus_laps if is_ok else 0,
     }
 
 
 # ══════════════════════════════════════════════
-# 6. V11: FUTURISTIC RACE ECOSYSTEM (PHYSICS)
+# 6. DYNAMIC PIT LOSS
 # ══════════════════════════════════════════════
 
 def dynamic_pit_loss(
@@ -240,28 +240,29 @@ def dynamic_pit_loss(
     base_loss: float = 22.0
 ) -> dict:
     """
-    SC/VSC ve hava durumunu hesaba katarak dinamik pit kaybi hesapla.
-    Normal sarti: ~22.0 sn.
-    VSC/SC sarti: Araclar yavas (delta time), pit kaybi azalir.
+    Calculate dynamic pit stop time loss accounting for SC/VSC and weather.
+    Normal conditions: ~22.0 s.
+    Under VSC/SC: cars run slower (delta time), so pit loss is reduced.
     """
     loss = base_loss
-    
-    # 1=SC, 2=VSC
+
+    # 1 = Safety Car, 2 = Virtual Safety Car
     if sc_status == 1:
-        loss = base_loss * 0.55  # ~12s kayip
+        loss = base_loss * 0.55  # ~12 s loss
     elif sc_status == 2:
-        loss = base_loss * 0.65  # ~14s kayip
-        
+        loss = base_loss * 0.65  # ~14 s loss
+
     # Weather: 3=Light rain, 4=Heavy Rain, 5=Storm
     if weather >= 3:
-        # Islak zeminde grid daha yavas, pit kaybi nispeten duser
+        # Wet conditions slow the field; pit loss decreases relatively
         loss -= (weather - 2) * 0.8
-        
+
     return {
-        "dynamic_loss_sec": round(loss, 2),
+        "dynamic_loss_sec":  round(loss, 2),
         "is_window_optimal": sc_status in [1, 2],
-        "sc_status": sc_status
+        "sc_status":         sc_status
     }
+
 
 def calculate_slipstream_advantage(
     clean_air_speed_kmh:  float,
@@ -269,45 +270,42 @@ def calculate_slipstream_advantage(
     straight_length_m:    float = 800.0
 ) -> dict:
     """
-    Temiz hava vs hava koridoru (Slipstream/DRS) hizlarini alir.
-    Duzluk sonunda ne kadar saniye ve km/h kazandiracagini hesaplar.
+    Given clean-air vs slipstream/DRS speeds, calculate time and speed gained
+    by the end of a straight.
     """
     speed_delta = slipstream_speed_kmh - clean_air_speed_kmh
     if speed_delta <= 0:
         return {"speed_delta_kmh": 0.0, "time_gained_sec": 0.0}
-        
-    # v = d / t => t = d / v
-    # Hizi m/s cinsine cevir
+
     v_clean_ms = clean_air_speed_kmh / 3.6
     v_slip_ms  = slipstream_speed_kmh / 3.6
-    
-    time_clean = straight_length_m / v_clean_ms if v_clean_ms > 0 else 0
-    time_slip  = straight_length_m / v_slip_ms if v_slip_ms > 0 else 0
+
+    time_clean  = straight_length_m / v_clean_ms if v_clean_ms > 0 else 0
+    time_slip   = straight_length_m / v_slip_ms  if v_slip_ms  > 0 else 0
     time_gained = max(0, time_clean - time_slip)
-    
+
     return {
         "speed_delta_kmh": round(speed_delta, 1),
         "time_gained_sec": round(time_gained, 3),
-        "efficient": speed_delta > 5.0
+        "efficient":       speed_delta > 5.0
     }
 
+
 def lift_and_coast_savings(
-    coast_time_sec: float,
-    fuel_rate_kg_per_sec: float = 0.035  # Approximate F1 fuel flow rate at max throttle
+    coast_time_sec:       float,
+    fuel_rate_kg_per_sec: float = 0.035   # Approximate F1 fuel flow at max throttle
 ) -> dict:
     """
-    Fuel saved when lifting off the throttle (Lift and Coast) compared to Full Throttle
-    ne kadar yakit tasarrufu yapildigini gram cinsinden dondurur.
+    Fuel saved when lifting off the throttle (Lift and Coast) vs full throttle.
+    Returns fuel saved in kg and grams.
     """
-    kg_saved = coast_time_sec * fuel_rate_kg_per_sec
-    grams_saved = kg_saved * 1000.0
-    
-    # 1 kg fuel is roughly 0.030s lost per lap. 
-    # But coasting also loses physical time. Let's assume a rough ratio.
+    kg_saved     = coast_time_sec * fuel_rate_kg_per_sec
+    grams_saved  = kg_saved * 1000.0
+
     return {
-        "coast_time_sec": round(coast_time_sec, 2),
-        "fuel_saved_kg": round(kg_saved, 3),
-        "fuel_saved_grams": round(grams_saved, 1)
+        "coast_time_sec":    round(coast_time_sec, 2),
+        "fuel_saved_kg":     round(kg_saved, 3),
+        "fuel_saved_grams":  round(grams_saved, 1)
     }
 
 
@@ -315,21 +313,22 @@ def lift_and_coast_savings(
 # CLI DEMO
 # ══════════════════════════════════════════════
 if __name__ == "__main__":
-    print("=== Yakit Yuku (57 tur, 2.2 kg/tur) ===")
     import json
+
+    print("=== Fuel Load (57 laps, 2.2 kg/lap) ===")
     print(json.dumps(calculate_fuel_load(57, 2.2), indent=2))
 
-    print("\n=== Fren Mesafesi (300 → 80 km/h, 4.5g) ===")
+    print("\n=== Braking Distance (300 → 80 km/h, 4.5g) ===")
     print(json.dumps(calculate_braking_distance(300, 80, 4.5), indent=2))
 
-    print("\n=== Lastik Termal (3 adim) ===")
+    print("\n=== Tyre Thermal (3 steps) ===")
     m = TyreThermalModel(80, 22)
     for spd, brk, lat in [(300, 0, 1), (100, 1, 0), (300, 0, 2)]:
         t = m.step(spd, brk, lat)
         print(f"  Spd:{spd}  Brk:{brk}  Lat:{lat}  -> {t}°C  [{m.status}]")
 
-    print("\n=== Gecis Firsati ===")
+    print("\n=== Overtake Window ===")
     print(json.dumps(calculate_overtake_window(25, 65, 1.2, 80), indent=2))
 
-    print("\n=== Yakit Acigi ===")
+    print("\n=== Fuel Deficit ===")
     print(json.dumps(fuel_deficit_analysis(40, 18, 57, 40), indent=2))
