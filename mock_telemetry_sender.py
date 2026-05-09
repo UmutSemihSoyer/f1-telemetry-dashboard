@@ -82,7 +82,25 @@ while True:
         mot_cars+=struct.pack(MOTION_FMT,
             pos_x,0.,pos_z, 0.,0.,0., 0,0,32767,0,32767,0,
             g_lat,g_lon,0., 0.,0.,0.) if i==0 else bytes(60)
-    sock.sendto(hdr(0)+mot_cars+bytes(120),(UDP_IP,UDP_PORT))
+            
+    # Extra player data (120 bytes = 30 floats)
+    slip = 0.5 if not is_accel else 0.05
+    susp_pos = 1.5 + random.uniform(-0.1, 0.1) if not is_accel else 2.5 + random.uniform(-0.1, 0.1)
+    extra_data = struct.pack("<30f",
+        # Suspension Pos (RL, RR, FL, FR)
+        susp_pos, susp_pos, susp_pos-0.5, susp_pos-0.5,
+        # Suspension Vel
+        0., 0., 0., 0.,
+        # Suspension Accel
+        0., 0., 0., 0.,
+        # Wheel Speed
+        speed/3.6, speed/3.6, speed/3.6, speed/3.6,
+        # Wheel Slip
+        slip, slip, slip, slip,
+        # Rest (10 floats)
+        0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
+    )
+    sock.sendto(hdr(0)+mot_cars+extra_data,(UDP_IP,UDP_PORT))
 
     # ---- PACKET 6: FULL TELEMETRY (60 bytes each car) ----
     # <HfffBbHBBHHHHHBBBBBBBBHffffBBBB>

@@ -4,7 +4,7 @@ import numpy as np
 import json
 from pathlib import Path
 
-from ui.layout import create_live_hud, create_analysis_tab, create_strategy_tab
+from ui.layout import create_live_hud, create_analysis_tab, create_strategy_tab, create_setup_tab, create_race_control_tab
 from plotting.telemetry_plots import TelemetryPlots
 
 def register_callbacks(app):
@@ -17,6 +17,10 @@ def register_callbacks(app):
             return create_analysis_tab()
         elif tab == 'strategy':
             return create_strategy_tab()
+        elif tab == 'setup':
+            return create_setup_tab()
+        elif tab == 'race_control':
+            return create_race_control_tab()
 
     @app.callback(
         [Output('live-speed-graph', 'figure'),
@@ -36,19 +40,22 @@ def register_callbacks(app):
     )
     def update_live_data(n):
         _empty = [{}, {}, {}, "0", "0.0", "No data", "0.00", {}, {}, "0", {}, "--", "--"]
-        if not Path("live_data.json").exists():
-            return _empty
         
         try:
-            df = pd.read_json("live_data.json")
-            if df.empty:
+            import shared_state
+            chunk_data, path_data = shared_state.get_telemetry()
+            
+            if not chunk_data:
                 return _empty
+            
+            df = pd.DataFrame(chunk_data)
+            path_df = pd.DataFrame(path_data) if path_data else df
             
             # --- TELEMETRY PLOTS ---
             plots = TelemetryPlots()
             speed_fig = plots.create_speed_plot(df)
             pedal_fig = plots.create_pedal_plot(df)
-            track_fig = plots.create_track_map(df)
+            track_fig = plots.create_track_map(path_df)
             
             latest = df.iloc[-1]
             speed_val = f"{int(latest.get('Speed', 0))}"
@@ -129,6 +136,84 @@ def register_callbacks(app):
             return [{}, {}, {}, "ERR", "0.0", f"Error: {str(e)}", "0.00", {}, {}, "0", {}, "--", "--"]
 
     @app.callback(
+        [Output('setup-suspension-graph', 'figure'),
+         Output('setup-slip-graph', 'figure')],
+        [Input('update-interval', 'n_intervals')],
+        [Input('main-tabs', 'value')]
+    )
+    def update_setup_tab(n, active_tab):
+        if active_tab != 'setup':
+            return [{}, {}]
+
+        susp_fig = {}
+        slip_fig = {}
+
+        try:
+            import shared_state
+            chunk_data, _ = shared_state.get_telemetry()
+            if chunk_data:
+                df = pd.DataFrame(chunk_data)
+                if not df.empty:
+                    plots = TelemetryPlots()
+                    susp_fig = plots.create_suspension_plot(df)
+                    slip_fig = plots.create_slip_plot(df)
+        except Exception:
+            pass
+
+        return [susp_fig, slip_fig]
+
+    @app.callback(
+        Output('race-control-table', 'children'),
+        [Input('update-interval', 'n_intervals')],
+        [Input('main-tabs', 'value')]
+    )
+    def update_race_control(n, active_tab):
+        if active_tab != 'race_control':
+            return ""
+
+        try:
+            import shared_state
+            lb = shared_state.get_leaderboard()
+            if not lb:
+                return html.Div("No timing data available yet.", style={'color': '#8e8e93'})
+
+            rows = []
+            rows.append(html.Tr([
+                html.Th("Pos", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'textAlign': 'left'}),
+                html.Th("Car", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'textAlign': 'left'}),
+                html.Th("Lap", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'textAlign': 'left'}),
+                html.Th("Last Lap", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'textAlign': 'left'}),
+                html.Th("Penalties", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'textAlign': 'left'})
+            ]))
+
+            # lb is a list of dicts: {'car': idx, 'position': pos, 'lapNum': lap, 'lapTimeMS': ms, 'penalties': p}
+            # We should sort by position
+            lb_sorted = sorted(lb, key=lambda x: x.get('position', 99))
+
+            for entry in lb_sorted:
+                pos = entry.get('position', 0)
+                if pos == 0: continue
+                
+                car = entry.get('car', 0)
+                lap = entry.get('lapNum', 0)
+                ms = entry.get('lapTimeMS', 0)
+                pen = entry.get('penalties', 0)
+                
+                time_str = f"{ms//60000}:{(ms%60000)/1000:06.3f}" if ms > 0 else "--:--.---"
+                
+                rows.append(html.Tr([
+                    html.Td(str(pos), style={'padding': '8px', 'borderBottom': '1px solid #2c2d33'}),
+                    html.Td(f"Car #{car}", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'fontWeight': 'bold'}),
+                    html.Td(str(lap), style={'padding': '8px', 'borderBottom': '1px solid #2c2d33'}),
+                    html.Td(time_str, style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'color': '#00d2be'}),
+                    html.Td(f"+{pen}s" if pen > 0 else "", style={'padding': '8px', 'borderBottom': '1px solid #2c2d33', 'color': '#ff1801'})
+                ]))
+
+            return html.Table(rows, style={'width': '100%', 'borderCollapse': 'collapse'})
+        except Exception as e:
+            return html.Div(f"Error loading leaderboard: {e}", style={'color': '#ff1801'})
+
+    @app.callback(
         [Output('analysis-gforce-map', 'figure'),
          Output('analysis-tire-wear', 'figure'),
          Output('lap-history-table', 'children')],
@@ -143,15 +228,17 @@ def register_callbacks(app):
         tire_fig   = {}
         lap_table  = html.Div("No lap data available.", style={'color': '#8e8e93'})
 
-        if Path("live_data.json").exists():
-            try:
-                df = pd.read_json("live_data.json")
+        try:
+            import shared_state
+            chunk_data, _ = shared_state.get_telemetry()
+            if chunk_data:
+                df = pd.DataFrame(chunk_data)
                 if not df.empty:
                     plots = TelemetryPlots()
                     gforce_fig = plots.create_g_force_plot(df)
                     tire_fig   = plots.create_tire_wear_plot(df)
-            except Exception:
-                pass
+        except Exception:
+            pass
 
         try:
             import sqlite3
@@ -220,11 +307,13 @@ def register_callbacks(app):
 
         # --- Real Strategy Recommendations ---
         strategy = []
-        if Path("live_data.json").exists():
-            try:
+        try:
+            import shared_state
+            chunk_data, _ = shared_state.get_telemetry()
+            if chunk_data:
                 from analytics_physics import fuel_deficit_analysis, dynamic_pit_loss
 
-                df = pd.read_json("live_data.json")
+                df = pd.DataFrame(chunk_data)
                 if not df.empty:
                     latest     = df.iloc[-1]
                     fuel_kg    = latest.get('Fuel', 0)
@@ -262,9 +351,9 @@ def register_callbacks(app):
                         f"🏁 Laps Remaining: {laps_rem} / {total_laps}",
                         style={'color': '#e1e1e1', 'padding': '5px'}))
 
-            except Exception as e:
-                strategy.append(html.Div(f"Strategy data unavailable: {e}",
-                                         style={'color': '#8e8e93'}))
+        except Exception as e:
+            strategy.append(html.Div(f"Strategy data unavailable: {e}",
+                                     style={'color': '#8e8e93'}))
 
         if not strategy:
             strategy = [html.Div("No live data available.", style={'color': '#8e8e93'})]

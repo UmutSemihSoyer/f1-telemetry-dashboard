@@ -90,26 +90,74 @@ class TelemetryPlots:
 
     @staticmethod
     def create_track_map(df):
-        # 2D track map using PosX and PosZ
         fig = go.Figure()
+        
+        if df is None or df.empty or 'PosX' not in df.columns or 'PosZ' not in df.columns:
+            fig.update_layout(title="Track Position (No Data)", **PLOTLY_DARK['layout'])
+            return fig
+            
+        # 2D track map using PosX and PosZ
         fig.add_trace(go.Scatter(
             x=df['PosX'], y=df['PosZ'],
             mode='lines',
             line=dict(color='#e1e1e1', width=3),
             name='Track'
         ))
+        
         # Current position marker
-        fig.add_trace(go.Scatter(
-            x=[df['PosX'].iloc[-1]], y=[df['PosZ'].iloc[-1]],
-            mode='markers',
-            marker=dict(size=12, color='#ff1801', symbol='triangle-up'),
-            name='Current Pos'
-        ))
+        if len(df) > 0:
+            fig.add_trace(go.Scatter(
+                x=[df['PosX'].iloc[-1]], y=[df['PosZ'].iloc[-1]],
+                mode='markers',
+                marker=dict(size=12, color='#ff1801', symbol='triangle-up'),
+                name='Current Pos'
+            ))
+            
         fig.update_layout(
             title="Track Position",
             showlegend=False,
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            **PLOTLY_DARK['layout']
+        )
+        return fig
+
+    @staticmethod
+    def create_suspension_plot(df):
+        fig = go.Figure()
+        if df is None or df.empty or 'SuspPosFL' not in df.columns:
+            fig.update_layout(title="Suspension Travel (No Data)", **PLOTLY_DARK['layout'])
+            return fig
+            
+        fig.add_trace(go.Scatter(y=df['SuspPosFL'], mode='lines', name='FL', line=dict(color='#00d2be')))
+        fig.add_trace(go.Scatter(y=df['SuspPosFR'], mode='lines', name='FR', line=dict(color='#ff1801')))
+        fig.add_trace(go.Scatter(y=df['SuspPosRL'], mode='lines', name='RL', line=dict(color='#e1e1e1')))
+        fig.add_trace(go.Scatter(y=df['SuspPosRR'], mode='lines', name='RR', line=dict(color='#9b00ef')))
+        
+        fig.update_layout(
+            title="Suspension Compression",
+            yaxis=dict(title="Position"),
+            xaxis=dict(title="Recent History"),
+            **PLOTLY_DARK['layout']
+        )
+        return fig
+
+    @staticmethod
+    def create_slip_plot(df):
+        fig = go.Figure()
+        if df is None or df.empty or 'WheelSlipFL' not in df.columns:
+            fig.update_layout(title="Wheel Slip (No Data)", **PLOTLY_DARK['layout'])
+            return fig
+            
+        fig.add_trace(go.Scatter(y=df['WheelSlipRL'], mode='lines', name='RL (Traction)', line=dict(color='#e1e1e1')))
+        fig.add_trace(go.Scatter(y=df['WheelSlipRR'], mode='lines', name='RR (Traction)', line=dict(color='#9b00ef')))
+        fig.add_trace(go.Scatter(y=df['WheelSlipFL'], mode='lines', name='FL (Lockup)', line=dict(color='#00d2be')))
+        fig.add_trace(go.Scatter(y=df['WheelSlipFR'], mode='lines', name='FR (Lockup)', line=dict(color='#ff1801')))
+        
+        fig.update_layout(
+            title="Wheel Slip Ratio",
+            yaxis=dict(title="Slip"),
+            xaxis=dict(title="Recent History"),
             **PLOTLY_DARK['layout']
         )
         return fig

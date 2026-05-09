@@ -107,12 +107,20 @@ class TelemetryManager:
             fuel_laps = self._latest_status.get('FuelLaps', 0)
             df['PitPrediction'] = round(fuel_laps, 1) if fuel_laps > 0 else -1
 
-        # ── Motion (track map) ────────────────────────────────────────────────
+        # ── Motion (track map, suspension) ────────────────────────────────────────────────
         if self._latest_motion:
             df['PosX'] = self._latest_motion.get('PosX', 0)
             df['PosZ'] = self._latest_motion.get('PosZ', 0)
             df['GLat'] = self._latest_motion.get('GLat', 0)
             df['GLon'] = self._latest_motion.get('GLon', 0)
+            df['SuspPosRL'] = self._latest_motion.get('SuspPosRL', 0)
+            df['SuspPosRR'] = self._latest_motion.get('SuspPosRR', 0)
+            df['SuspPosFL'] = self._latest_motion.get('SuspPosFL', 0)
+            df['SuspPosFR'] = self._latest_motion.get('SuspPosFR', 0)
+            df['WheelSlipRL'] = self._latest_motion.get('WheelSlipRL', 0)
+            df['WheelSlipRR'] = self._latest_motion.get('WheelSlipRR', 0)
+            df['WheelSlipFL'] = self._latest_motion.get('WheelSlipFL', 0)
+            df['WheelSlipFR'] = self._latest_motion.get('WheelSlipFR', 0)
 
         # ── Session (weather, temps) ───────────────────────────────────────────
         if self._latest_session:
@@ -127,13 +135,21 @@ class TelemetryManager:
             df['CarPosition'] = self._latest_competitors.get('CarPosition', 0)
             df['GapAhead']    = self._latest_competitors.get('GapAhead', 0.0)
             df['GapBehind']   = self._latest_competitors.get('GapBehind', 0.0)
+            
+            try:
+                import shared_state
+                lb = self._latest_competitors.get('Leaderboard', [])
+                shared_state.update_leaderboard(lb)
+            except Exception:
+                pass
 
         self.full_lap_buffer.append(df.copy())
 
         try:
-            df.to_json("live_data.json", orient="records")
+            import shared_state
+            shared_state.update_telemetry(df)
         except Exception as e:
-            logger.error(f"Failed to save live_data.json: {e}")
+            logger.error(f"Failed to update shared_state: {e}")
 
         self.telemetry_buffer.clear()
 

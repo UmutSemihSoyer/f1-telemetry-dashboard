@@ -46,20 +46,62 @@ class ExportService:
         pdf.set_auto_page_break(auto=True, margin=15)
         pdf.add_page()
         
-        # ... (Implementation of PDF rows/headers as in the original exporter.py)
-        # For brevity, I will implement the core report structure
+        # Header
         pdf.set_font("Helvetica", "B", 18)
         pdf.cell(0, 10, "F1 2022 Session Telemetry Report", new_x="LMARGIN", new_y="NEXT", align='C')
         pdf.set_font("Helvetica", "", 10)
         pdf.cell(0, 10, f"Generated: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}", new_x="LMARGIN", new_y="NEXT", align='C')
+        pdf.ln(10)
+        
+        # Lap Times Table
+        if not laps_df.empty:
+            pdf.set_font("Helvetica", "B", 14)
+            pdf.cell(0, 10, "Lap History", new_x="LMARGIN", new_y="NEXT")
+            pdf.set_font("Helvetica", "B", 10)
+            
+            # Table Header
+            col_widths = [20, 40, 40, 40]
+            headers = ["Lap", "Lap Time", "Sector 1", "Sector 2"]
+            for i, header in enumerate(headers):
+                pdf.cell(col_widths[i], 10, header, border=1, align='C')
+            pdf.ln()
+            
+            # Table Rows
+            pdf.set_font("Helvetica", "", 10)
+            for _, row in laps_df.iterrows():
+                lap_ms = int(row.get('lap_time_ms', 0))
+                s1 = int(row.get('sector1_ms', 0))
+                s2 = int(row.get('sector2_ms', 0))
+                
+                time_str = f"{lap_ms//60000}:{(lap_ms%60000)/1000:06.3f}" if lap_ms > 0 else "-"
+                s1_str = f"{s1/1000:.3f}" if s1 > 0 else "-"
+                s2_str = f"{s2/1000:.3f}" if s2 > 0 else "-"
+                
+                pdf.cell(col_widths[0], 10, str(row.get('lap_num', 0)), border=1, align='C')
+                pdf.cell(col_widths[1], 10, time_str, border=1, align='C')
+                pdf.cell(col_widths[2], 10, s1_str, border=1, align='C')
+                pdf.cell(col_widths[3], 10, s2_str, border=1, align='C')
+                pdf.ln()
         
         # Save output
         pdf.output(f"session_report_{ts}.pdf")
 
 def run_export():
     """
-    Stand-alone export trigger.
+    Stand-alone export trigger reading from local sqlite.
     """
     service = ExportService()
-    # In a real scenario, we'd pass the current dataframes here
+    laps_df = service.load_lap_times()
+    
+    # Try fetching session_history from the DB if load_lap_times returns empty
+    if laps_df.empty:
+        try:
+            conn = sqlite3.connect("telemetry.db")
+            laps_df = pd.read_sql_query("SELECT * FROM session_history ORDER BY lap_num", conn)
+            conn.close()
+        except Exception:
+            pass
+            
     print("Export triggered. Generating files...")
+    service.export_session(pd.DataFrame(), laps_df, pd.DataFrame())
+    print("Export complete.")

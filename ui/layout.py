@@ -122,6 +122,28 @@ def create_strategy_tab():
         ])
     ])
 
+def create_setup_tab():
+    return html.Div(className='main-container', children=[
+        html.Div(className='row', style={'display': 'flex', 'gap': '20px', 'marginBottom': '20px'}, children=[
+            html.Div(className='card', style={'flex': '1'}, children=[
+                html.Div("Suspension Travel (Bottoming Out)", className='card-title'),
+                dcc.Graph(id='setup-suspension-graph')
+            ]),
+            html.Div(className='card', style={'flex': '1'}, children=[
+                html.Div("Wheel Slip (Traction/Lockup)", className='card-title'),
+                dcc.Graph(id='setup-slip-graph')
+            ])
+        ])
+    ])
+
+def create_race_control_tab():
+    return html.Div(className='main-container', children=[
+        html.Div(className='card', children=[
+            html.Div("Live Timing Tower", className='card-title'),
+            html.Div(id='race-control-table')
+        ])
+    ])
+
 def get_layout():
     return html.Div([
         create_header(),
@@ -129,6 +151,8 @@ def get_layout():
             dcc.Tab(label='Live HUD', value='live', className='custom-tab', selected_className='custom-tab--selected'),
             dcc.Tab(label='Data Analysis', value='analysis', className='custom-tab', selected_className='custom-tab--selected'),
             dcc.Tab(label='Strategy', value='strategy', className='custom-tab', selected_className='custom-tab--selected'),
+            dcc.Tab(label='Setup Tuning', value='setup', className='custom-tab', selected_className='custom-tab--selected'),
+            dcc.Tab(label='Race Control', value='race_control', className='custom-tab', selected_className='custom-tab--selected'),
         ]),
         html.Div(id='tabs-content'),
         dcc.Interval(id='update-interval', interval=500, n_intervals=0),
