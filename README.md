@@ -1,91 +1,67 @@
-# 🏎️ F1 2022 Pit Wall — Real-Time Telemetry Dashboard
+# 🏎️ F1 2022 Telemetry Suite v5.0 — Ultra-Premium
 
-[![CI](https://github.com/UmutSemihSoyer/f1-telemetry-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/UmutSemihSoyer/f1-telemetry-dashboard/actions)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Architecture](https://img.shields.io/badge/Architecture-In--Memory-red)](shared_state.py)
 
-A professional, real-time telemetry analysis and race engineering system built for **F1 2022**.
-Captures live UDP telemetry, performs physics and ML analysis, and presents insights through
-an interactive multi-tab dashboard with voice alerts.
-
-> **Compatibility Note:** The UDP packet structure is specifically designed for the **F1 2022**
-> telemetry format. For F1 23/24, the packet unpacking logic in `core/listener.py` must be
-> updated per the official EA/Codemasters specification.
-
-## 📸 Dashboard Preview
-
-![Live HUD & Track Map](assets/dashboard_demo.webp)
-
-**Live HUD:**
-![Live HUD](assets/live_hud.png)
-
-**Data Analysis:**
-![Data Analysis](assets/data_analysis.png)
-
-**Strategy & Race Engineer:**
-![Strategy](assets/strategy.png)
+A professional-grade, high-performance **Desktop Telemetry Suite** built for **F1 2022**. 
+Transitioning from a web-based dashboard to a native, zero-latency desktop application, this suite provides industry-standard analysis tools comparable to MoTeC and VRS.
 
 ---
 
-## ✨ Features
+## 📸 Masterpiece Preview
+
+![Desktop App & Track Map](assets/dashboard_demo.webp)
+
+---
+
+## ✨ Ultra-Premium Features (v5.0)
 
 | Feature | Description |
 |---|---|
-| 🔴 **Live Telemetry** | Speed, RPM, gear shifts, throttle/brake inputs at 10 Hz |
-| ⏱️ **Live Delta** | iRacing-style Δ vs Personal Best with animated color bar |
-| 🗺️ **Track Map** | Real-time 2D car position from Motion UDP packets |
-| 🧠 **ML Braking Zones** | K-Means clustering of braking points across laps |
-| 🔧 **Race Engineer** | Corner-by-corner feedback vs Personal Best |
-| ⛽ **Fuel Analysis** | Deficit analysis, lift-and-coast savings, pit window |
-| 🏎️ **Tyre Thermals** | Physics-based tyre temperature model with status alerts |
-| 📡 **Voice Alerts** | Pit wall radio via TTS: fuel, tyres, ERS, safety car |
-| 🌐 **Ergast API** | Compare your laps against real F1 drivers (2023–2024) |
-| 🔁 **Session Replay** | Replay any saved session through the live dashboard |
-| 📄 **PDF Reports** | Auto-generated post-session PDF/CSV exports |
+| ⚡ **In-Memory Engine** | Shared Memory architecture with **0ms latency**. No disk I/O bottlenecks. |
+| 🖥️ **Native Desktop App** | Independent Windows application window powered by `pywebview`. |
+| 📊 **MoTeC i2 Export** | Export sessions to MoTeC-compatible CSVs for professional engineering. |
+| 👻 **Live Ghost Car** | Visual "Personal Best" ghost on the track map to track live delta. |
+| 🤖 **AI Tyre Prediction** | RandomForest ML model predicting the tyre degradation "cliff". |
+| 🗺️ **Full Track Trace** | Dynamic pathing that draws the entire lap trace, not just a slice. |
+| ⚖️ **Setup Tuning** | Dedicated tab for Suspension Compression & Wheel Slip analysis. |
+| 🏰 **Race Control** | 22-car live Timing Tower with positions, gaps, and penalties. |
+| 📡 **Advanced Voice** | Fully active Voice Engineer radio for fuel, wear, and DRS alerts. |
+| 🌦️ **Rain Radar** | Real-time weather forecasting based on 30-minute game samples. |
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Technical Architecture
+
+The suite has been re-engineered for performance using a unified process model:
 
 ```
 udp_telemetry/
-├── dashboard.py            # Entry point — Dash web app
-├── telemetry_listener.py   # Main coordinator — queues UDP data & triggers services
-├── run_all.py              # One-command launcher (listener + dashboard)
+├── app.py                  # MAIN ENTRY POINT — Desktop GUI + Listener + Server
+├── shared_state.py         # SHARED MEMORY — Thread-safe RAM storage (0ms I/O)
 │
-├── core/                   # Pure computation — no I/O side effects
-│   ├── listener.py         # UDP socket, packet parser, data queue
-│   ├── physics_engine.py   # G-forces, braking distance, tyre thermal model
-│   └── ml_engine.py        # K-Means braking zones, lap consistency
+├── core/                   # Processing Layer
+│   ├── listener.py         # High-speed UDP packet binary unpacking
+│   ├── physics_engine.py   # G-force and thermal models
+│   └── ml_engine.py        # RandomForest Tyre Prediction & K-Means clusters
 │
-├── services/               # Business logic — reads/writes to disk & DB
-│   ├── data_service.py     # SQLite persistence (lap times, braking zones)
-│   ├── race_engineer.py    # Corner analysis & driving feedback
-│   ├── telemetry_service.py# Delta timing vs Personal Best
-│   └── exporter.py         # PDF & CSV session report generation
+├── ui/                     # Presentation Layer
+│   ├── layout.py           # Dashboard design with interactive strategy planner
+│   └── callbacks.py        # Real-time state fetching from RAM
 │
-├── ui/                     # Dash components
-│   ├── layout.py           # Page structure, tabs, cards
-│   └── callbacks.py        # Live update callbacks
+├── services/               # Infrastructure Layer
+│   ├── exporter.py         # PDF Reporting & MoTeC CSV Engine
+│   └── data_service.py     # SQLite persistence for lap history
 │
-├── plotting/
-│   └── telemetry_plots.py  # Plotly figure builders (speed, pedals, G-force, track)
-│
-├── assets/
-│   └── style.css           # Dark theme CSS design system
-│
-├── mock_telemetry_sender.py# Testing tool — broadcasts mock F1 data without a game
-├── replay.py               # Replay past sessions through the live dashboard
-├── ergast_api.py           # Fetch real F1 lap data from Ergast API
-├── analytics_physics.py    # Standalone physics functions (fuel, braking, overtake)
-└── voice_alerts.py         # TTS voice alert system
+└── build.ps1               # COMPILATION — One-click .EXE creation script
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
-### 1. Clone & Install
+### 1. Installation
 
 ```bash
 git clone https://github.com/UmutSemihSoyer/f1-telemetry-dashboard.git
@@ -93,137 +69,48 @@ cd f1-telemetry-dashboard
 pip install -r requirements.txt
 ```
 
-### 2. Configure
+### 2. Run the Desktop App
 
 ```bash
-cp config.example.json config.json
-# Edit config.json if you want to change the UDP port or disable voice alerts
+python app.py
 ```
+*Note: This starts the UDP Listener, the Dash background server, and the Desktop Window in one command.*
 
-### 3. Run
+### 3. Create a Standalone .EXE
 
-**Full system (with live game):**
-```bash
-python run_all.py
-```
-Then open **http://127.0.0.1:8050** in your browser.
-
-Press `CTRL+C` to stop all services.
+If you want to run the suite without Python:
+1. Open PowerShell.
+2. Run `./build.ps1`.
+3. Find your app in `dist/F1_PitWall.exe`.
 
 ---
 
-## 🎮 Mock Mode (Test Without the Game)
+## 🏎️ Analysis Tools
 
-You can test the full system without F1 2022 running:
+### Multi-Lap Overlay
+In the **Analysis** tab, select two completed laps from the dropdowns. The system will overlay their speed, throttle, and brake traces on a single graph with a unified X-axis (Distance), allowing you to pinpoint exactly where you lost time.
 
-```bash
-# Terminal 1 — Start the listener and dashboard
-python run_all.py
+### MoTeC Integration
+Use the **Export to MoTeC** button to generate a CSV formatted for MoTeC i2 Pro. It includes high-resolution channels for:
+- Steering Angle
+- Suspension Velocity
+- Wheel Slip (Traction/Lockup)
+- G-Forces (Lateral/Longitudinal)
 
-# Terminal 2 — Broadcast simulated telemetry
-python mock_telemetry_sender.py
-```
-
-The mock sender simulates a full race at Monza: speed, braking, tyre temps, fuel burn, ERS, weather changes.
-
----
-
-## 🕹️ In-Game Setup (F1 2022)
-
-1. Open **Settings → Telemetry Settings**
-2. Enable **UDP Telemetry**
-3. Set **IP Address** → `127.0.0.1`
-4. Set **Port** → `20777`
-5. Set **UDP Format** → `2022`
-6. Start `python run_all.py` and begin a session
+### Strategy Planner
+An interactive simulator where you can input pit stop laps. The engine uses our ML model to estimate the **Total Race Time**, comparing different strategies (e.g., 1-stop vs 2-stop) against the optimal path.
 
 ---
 
-## 🔁 Session Replay
+## 🎮 In-Game Setup (F1 2022)
 
-Replay any previously recorded session through the live dashboard:
-
-```bash
-# List all saved sessions
-python replay.py
-
-# Replay the latest session at 2× speed
-python replay.py --speed 2.0
-
-# Replay a specific session
-python replay.py --session 20260316_012724 --speed 1.5
-
-# Replay from a CSV file
-python replay.py --csv session_telemetry_20260316_012724.csv
-```
-
----
-
-## 🌐 Ergast API — Compare vs Real F1 Drivers
-
-```python
-from ergast_api import fetch_race_laps, build_comparison_df, CIRCUIT_MAP
-
-# Download Monza 2024 lap times
-df = fetch_race_laps(2024, 16)
-
-# Compare your best lap against the field
-comparison = build_comparison_df(our_best_ms=95_000, real_df=df)
-print(comparison.head(10))
-```
-
-Results are cached in `.ergast_cache/` to avoid repeated downloads.
-
----
-
-## 🧪 Running Tests
-
-```bash
-pytest tests/ -v
-```
-
-The test suite covers:
-- Fuel load calculation (7 tests)
-- Braking distance physics (7 tests)
-- Tyre thermal model (9 tests)
-- Overtake opportunity window (5 tests)
-- Fuel deficit analysis (6 tests)
-- Lap consistency metrics (6 tests)
-
----
-
-## 🛠️ Configuration Reference (`config.json`)
-
-| Key | Default | Description |
-|---|---|---|
-| `network.UDP_IP` | `0.0.0.0` | Listen on all interfaces |
-| `network.UDP_PORT` | `20777` | Must match in-game setting |
-| `voice.ENABLED` | `true` | Enable/disable TTS voice alerts |
-| `voice.RATE` | `180` | TTS speech rate (words per minute) |
-| `voice.COOLDOWN_SEC` | `15` | Minimum seconds between repeated alerts |
-| `alerts.TYRE_CRIT_PCT` | `85` | Tyre wear % that triggers critical voice alert |
-| `alerts.FUEL_CRIT_LAPS` | `2` | Remaining fuel laps for critical alert |
-
----
-
-## 📦 Dependencies
-
-```
-dash, plotly         — Dashboard and visualization
-pandas, numpy        — Data processing
-scikit-learn         — ML braking zone clustering
-requests             — Ergast API calls
-fpdf2                — PDF report generation
-pyttsx3              — Voice alerts (TTS)
-python-docx          — Word document export
-```
-
-Install all with: `pip install -r requirements.txt`
+1. **Telemetry Settings:** Enable UDP Telemetry.
+2. **IP/Port:** `127.0.0.1` / `20777`.
+3. **Format:** `2022`.
+4. **Action:** Start `app.py` before heading out of the pit lane.
 
 ---
 
 ## 📄 License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
-© 2026 Umut Semih Soyer
+MIT License — © 2026 Umut Semih Soyer
