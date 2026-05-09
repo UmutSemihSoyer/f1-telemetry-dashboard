@@ -15,20 +15,22 @@ Transitioning from a web-based dashboard to a native, zero-latency desktop appli
 
 ---
 
-## ✨ Ultra-Premium Features (v5.0)
+## ✨ Features (v5.0 Ultra-Premium)
 
 | Feature | Description |
 |---|---|
 | ⚡ **In-Memory Engine** | Shared Memory architecture with **0ms latency**. No disk I/O bottlenecks. |
 | 🖥️ **Native Desktop App** | Independent Windows application window powered by `pywebview`. |
-| 📊 **MoTeC i2 Export** | Export sessions to MoTeC-compatible CSVs for professional engineering. |
 | 👻 **Live Ghost Car** | Visual "Personal Best" ghost on the track map to track live delta. |
 | 🤖 **AI Tyre Prediction** | RandomForest ML model predicting the tyre degradation "cliff". |
+| 📊 **MoTeC i2 Export** | Export sessions to MoTeC-compatible CSVs for professional engineering. |
 | 🗺️ **Full Track Trace** | Dynamic pathing that draws the entire lap trace, not just a slice. |
 | ⚖️ **Setup Tuning** | Dedicated tab for Suspension Compression & Wheel Slip analysis. |
 | 🏰 **Race Control** | 22-car live Timing Tower with positions, gaps, and penalties. |
 | 📡 **Advanced Voice** | Fully active Voice Engineer radio for fuel, wear, and DRS alerts. |
 | 🌦️ **Rain Radar** | Real-time weather forecasting based on 30-minute game samples. |
+| ⏱️ **Live Delta** | iRacing-style Δ vs Personal Best with animated color bar |
+| 📄 **PDF Reports** | Auto-generated post-session PDF/CSV exports |
 
 ---
 
@@ -78,17 +80,42 @@ python app.py
 
 ### 3. Create a Standalone .EXE
 
-If you want to run the suite without Python:
+To run the suite without Python:
 1. Open PowerShell.
 2. Run `./build.ps1`.
 3. Find your app in `dist/F1_PitWall.exe`.
 
 ---
 
+## 🎮 Mock Mode (Test Without the Game)
+
+You can test the full system without F1 2022 running:
+
+```bash
+# Terminal 1 — Start the main app
+python app.py
+
+# Terminal 2 — Broadcast simulated telemetry
+python mock_telemetry_sender.py
+```
+
+---
+
+## 🕹️ In-Game Setup (F1 2022)
+
+1. Open **Settings → Telemetry Settings**
+2. Enable **UDP Telemetry**
+3. Set **IP Address** → `127.0.0.1`
+4. Set **Port** → `20777`
+5. Set **UDP Format** → `2022`
+6. Start `app.py` and begin a session
+
+---
+
 ## 🏎️ Analysis Tools
 
 ### Multi-Lap Overlay
-In the **Analysis** tab, select two completed laps from the dropdowns. The system will overlay their speed, throttle, and brake traces on a single graph with a unified X-axis (Distance), allowing you to pinpoint exactly where you lost time.
+In the **Analysis** tab, select two completed laps from the dropdowns. The system will overlay their speed, throttle, and brake traces on a single graph, allowing you to pinpoint exactly where you lost time.
 
 ### MoTeC Integration
 Use the **Export to MoTeC** button to generate a CSV formatted for MoTeC i2 Pro. It includes high-resolution channels for:
@@ -98,16 +125,51 @@ Use the **Export to MoTeC** button to generate a CSV formatted for MoTeC i2 Pro.
 - G-Forces (Lateral/Longitudinal)
 
 ### Strategy Planner
-An interactive simulator where you can input pit stop laps. The engine uses our ML model to estimate the **Total Race Time**, comparing different strategies (e.g., 1-stop vs 2-stop) against the optimal path.
+An interactive simulator where you can input pit stop laps. The engine uses our ML model to estimate the **Total Race Time**, comparing different strategies against the optimal path.
 
 ---
 
-## 🎮 In-Game Setup (F1 2022)
+## 🔁 Session Replay
 
-1. **Telemetry Settings:** Enable UDP Telemetry.
-2. **IP/Port:** `127.0.0.1` / `20777`.
-3. **Format:** `2022`.
-4. **Action:** Start `app.py` before heading out of the pit lane.
+Replay any previously recorded session through the live dashboard:
+
+```bash
+# List all saved sessions
+python replay.py
+
+# Replay the latest session at 2× speed
+python replay.py --speed 2.0
+```
+
+---
+
+## 🌐 Ergast API — Compare vs Real F1 Drivers
+
+The suite integrates with the Ergast API to let you compare your lap times against real-world data from the 2023-2024 seasons. Results are cached locally in `.ergast_cache/`.
+
+---
+
+## 🛠️ Configuration Reference (`config.json`)
+
+| Key | Default | Description |
+|---|---|---|
+| `network.UDP_IP` | `0.0.0.0` | Listen on all interfaces |
+| `network.UDP_PORT` | `20777` | Must match in-game setting |
+| `voice.ENABLED` | `true` | Enable/disable TTS voice alerts |
+| `voice.RATE` | `180` | TTS speech rate (words per minute) |
+| `voice.COOLDOWN_SEC` | `15` | Minimum seconds between repeated alerts |
+
+---
+
+## 📦 Dependencies
+
+- **dash, plotly** — Dashboard and visualization
+- **pywebview** — Native desktop windowing
+- **pandas, numpy** — Data processing
+- **scikit-learn** — AI Tyre prediction & ML clustering
+- **fpdf2** — PDF report generation
+- **pyttsx3** — Voice alerts (TTS)
+- **pyinstaller** — Standalone .EXE compilation
 
 ---
 
