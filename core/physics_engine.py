@@ -95,3 +95,33 @@ def calculate_lift_and_coast_gain(coast_time_sec, fuel_rate_kg_per_sec=0.035):
     """
     kg_saved = coast_time_sec * fuel_rate_kg_per_sec
     return kg_saved * 1000.0
+
+class AeroAnalyzer:
+    def __init__(self):
+        self.clean_air_baseline = {} # bin_id -> max_glat
+
+    def update_baseline(self, lap_data):
+        """Update max GLat baseline per 10m track segment."""
+        if not lap_data: return
+        for row in lap_data:
+            # We only record baseline if we are in clean air (assumed for best lap)
+            dist = row.get('LapDistance', 0)
+            glat = abs(row.get('GLat', 0))
+            bin_id = int(dist // 10)
+            self.clean_air_baseline[bin_id] = max(self.clean_air_baseline.get(bin_id, 0), glat)
+
+    def analyze_dirty_air(self, dist, current_glat, gap_ahead):
+        """Calculate downforce loss percentage when following closely."""
+        if gap_ahead <= 0 or gap_ahead > 0.7: return 0.0
+        
+        bin_id = int(dist // 10)
+        baseline = self.clean_air_baseline.get(bin_id, 0)
+        
+        # Only analyze in corners (G-force > 1.2)
+        if baseline < 1.2: return 0.0
+        
+        current_val = abs(current_glat)
+        if current_val < baseline * 0.95:
+            loss = (1.0 - (current_val / baseline)) * 100
+            return round(min(loss, 35.0), 1) # Cap at 35% loss
+        return 0.0

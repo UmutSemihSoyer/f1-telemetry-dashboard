@@ -113,6 +113,7 @@ class TelemetryManager:
         # ── Motion (track map, suspension) ────────────────────────────────────────────────
         if self._latest_motion:
             df['PosX'] = self._latest_motion.get('PosX', 0)
+            df['PosY'] = self._latest_motion.get('PosY', 0)
             df['PosZ'] = self._latest_motion.get('PosZ', 0)
             df['GLat'] = self._latest_motion.get('GLat', 0)
             df['GLon'] = self._latest_motion.get('GLon', 0)
@@ -211,6 +212,18 @@ class TelemetryManager:
                 speak("Braked too late! Focus on the exit.", "coach_late")
         elif curr_brake < 10:
             self._was_braking = False
+            
+        # 7. Dirty Air Analysis
+        gap_ahead = latest.get('GapAhead', 99.0)
+        if 0 < gap_ahead < 0.7:
+            import shared_state
+            loss = shared_state.aero_analyzer.analyze_dirty_air(
+                latest.get('LapDistance', 0),
+                latest.get('GLat', 0),
+                gap_ahead
+            )
+            if loss > 10.0:
+                speak(f"Warning! Dirty air detected. Loss of {loss}% downforce.", "aero_warn")
 
     def handle_lap_completion(self, lap_item):
         lap_num = self._last_lap_num

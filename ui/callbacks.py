@@ -219,27 +219,31 @@ def register_callbacks(app):
     @app.callback(
         [Output('analysis-gforce-map', 'figure'),
          Output('analysis-tire-wear', 'figure'),
+         Output('analysis-3d-graph', 'figure'),
          Output('lap-history-table', 'children')],
         [Input('update-interval', 'n_intervals')],
         [Input('main-tabs', 'value')]
     )
     def update_analysis_tab(n, active_tab):
         if active_tab != 'analysis':
-            return [{}, {}, ""]
+            return [{}, {}, {}, ""]
 
         gforce_fig = {}
         tire_fig   = {}
+        three_d_fig = {}
         lap_table  = html.Div("No lap data available.", style={'color': '#8e8e93'})
 
         try:
             import shared_state
-            chunk_data, _ = shared_state.get_telemetry()
+            chunk_data, lap_path = shared_state.get_telemetry()
             if chunk_data:
                 df = pd.DataFrame(chunk_data)
+                path_df = pd.DataFrame(lap_path)
                 if not df.empty:
                     plots = TelemetryPlots()
                     gforce_fig = plots.create_g_force_plot(df)
                     tire_fig   = plots.create_tire_wear_plot(df)
+                    three_d_fig = plots.create_3d_track_map(path_df if not path_df.empty else df)
         except Exception:
             pass
 
@@ -283,7 +287,7 @@ def register_callbacks(app):
         except Exception as e:
             lap_table = html.Div(f"Could not load history: {e}", style={'color': '#8e8e93'})
 
-        return [gforce_fig, tire_fig, lap_table]
+        return [gforce_fig, tire_fig, three_d_fig, lap_table]
 
     @app.callback(
         [Output('compare-lap-1', 'options'),

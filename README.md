@@ -1,12 +1,12 @@
-# 🏎️ F1 2022 Telemetry Suite v6.0 — God-Tier Edition
+# 🏎️ F1 2022 Telemetry Suite v7.0 — Simulation Master
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Architecture](https://img.shields.io/badge/Architecture-In--Memory-red)](shared_state.py)
 [![God-Tier](https://img.shields.io/badge/Edition-God--Tier-purple)](app.py)
+[![Simulation](https://img.shields.io/badge/Level-Simulation--Master-gold)](core/physics_engine.py)
 
 A high-performance, cloud-connected **Desktop Telemetry Suite** built for **F1 2022**. 
-v6.0 introduces the **God-Tier** update: Multiplayer Live Streaming, AI Braking Coaching, and Discord Automation.
+v7.0 introduces **Simulation Master** features: Dirty Air Aero Analysis and 3D Elevation Tracking.
 
 ---
 
@@ -16,20 +16,18 @@ v6.0 introduces the **God-Tier** update: Multiplayer Live Streaming, AI Braking 
 
 ---
 
-## ✨ God-Tier Features (v6.0)
+## ✨ Master Features (v7.0)
 
 | Feature | Description |
 |---|---|
-| 🌐 **Live Multiplayer Stream** | Expose your local dashboard to a public URL via **Ngrok**. Let your engineer watch live. |
+| 📐 **3D Track Replay** | Visualize the track in 3D with full elevation data (PosY). See the slopes of Spa/Monaco. |
+| 🌪️ **Dirty Air Analysis** | Real-time estimation of downforce loss when following another car (<0.7s gap). |
+| 🌐 **Live Multiplayer Stream** | Expose your local dashboard to a public URL via **Ngrok**. |
 | 🎓 **AI Braking Coach** | Real-time voice coaching comparing your braking points to your personal best. |
-| 💬 **Discord Automation** | Automated posting of New Best Laps and PDF session reports to your Discord channel. |
-| ⚡ **In-Memory Engine** | Shared Memory architecture with **0ms latency**. No disk I/O bottlenecks. |
-| 🖥️ **Native Desktop App** | Independent Windows application window powered by `pywebview`. |
-| 👻 **Live Ghost Car** | Visual "Personal Best" ghost on the track map to track live delta. |
+| 💬 **Discord Automation** | Automated posting of New Best Laps and PDF session reports to Discord. |
 | 🤖 **AI Tyre Prediction** | RandomForest ML model predicting the tyre degradation "cliff". |
 | 📊 **MoTeC i2 Export** | Export sessions to MoTeC-compatible CSVs for professional engineering. |
-| 🌦️ **Rain Radar** | Real-time weather forecasting based on 30-minute game samples. |
-| 📡 **Voice Engineer** | Fully active radio alerts for fuel, wear, DRS, and coaching. |
+| 👻 **Live Ghost Car** | Visual "Personal Best" ghost on the track map. |
 
 ---
 
@@ -43,17 +41,8 @@ cd f1-telemetry-dashboard
 pip install -r requirements.txt
 ```
 
-### 2. Configure (v6.0 Specifics)
-Edit `config.json` to enable new integrations:
-```json
-"remote": {
-    "STREAMING_ENABLED": true,
-    "NGROK_AUTH_TOKEN": "YOUR_TOKEN_HERE"
-},
-"integrations": {
-    "DISCORD_WEBHOOK_URL": "YOUR_WEBHOOK_HERE"
-}
-```
+### 2. Configure
+Edit `config.json` for Ngrok and Discord settings.
 
 ### 3. Run the Suite
 ```bash
@@ -62,11 +51,11 @@ python app.py
 
 ---
 
-## 🎓 AI Braking Coach
-The coach analyzes your braking performance in real-time. If you brake 8m+ earlier than your personal best, you'll hear: *"Braked too early! Brake later."* If you overshoot, it warns: *"Braked too late! Focus on the exit."*
+## 🌪️ Aero & Dirty Air Analysis
+The system tracks your "Clean Air" G-force baseline. When you follow a car within 0.7s, the **Aero Analyzer** calculates the percentage of lateral grip lost due to dirty air. Your engineer will alert you: *"Warning! Significant dirty air detected. Downforce down by 18%."*
 
-## 🌐 Remote Engineering (Ngrok)
-When `STREAMING_ENABLED` is true, the app generates a public URL. Share this with your teammate so they can monitor your temperatures, ERS, and strategy from their own device, anywhere in the world.
+## 📐 3D Elevation Replay
+In the **Analysis** tab, the new 3D Track visualization uses high-resolution motion data (PosX, PosY, PosZ) to render the track with its real vertical profile. The line is colored by your speed, allowing for detailed topographical driving analysis.
 
 ---
 
@@ -75,11 +64,10 @@ When `STREAMING_ENABLED` is true, the app generates a public URL. Share this wit
 ```
 udp_telemetry/
 ├── app.py                  # ENTRY POINT — GUI + Ngrok Tunnel + Dash Server
-├── shared_state.py         # SHARED MEMORY — Zero-latency state pool
-├── core/                   # Logic — AI Braking Coach, ML Models, Packet Parser
-├── ui/                     # UI — Layouts and live Callbacks
-├── services/               # Infrastructure — Discord Service, MoTeC Exporter
-└── build.ps1               # COMPILATION — Standalone .EXE script
+├── shared_state.py         # SHARED MEMORY — Zero-latency state pool (with PosY)
+├── core/                   # Logic — Aero Analyzer, Braking Coach, ML Models
+├── ui/                     # UI — 3D Replay & Live Strategy Planner
+└── services/               # Infrastructure — Discord Service, MoTeC Exporter
 ```
 
 ---

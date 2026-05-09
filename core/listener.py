@@ -143,7 +143,7 @@ class TelemetryListener:
             
             self.data_queue.put({
                 'Type': 'Motion', 'Timestamp': session_time,
-                'PosX': u[0], 'PosZ': u[2], 'GLat': u[12], 'GLon': u[13],
+                'PosX': u[0], 'PosY': u[1], 'PosZ': u[2], 'GLat': u[12], 'GLon': u[13],
                 'SuspPosRL': extra_u[0], 'SuspPosRR': extra_u[1], 'SuspPosFL': extra_u[2], 'SuspPosFR': extra_u[3],
                 'SuspVelRL': extra_u[4], 'SuspVelRR': extra_u[5], 'SuspVelFL': extra_u[6], 'SuspVelFR': extra_u[7],
                 'WheelSlipRL': extra_u[16], 'WheelSlipRR': extra_u[17], 'WheelSlipFL': extra_u[18], 'WheelSlipFR': extra_u[19]

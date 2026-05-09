@@ -6,10 +6,12 @@ from core.ml_engine import TyreDegradationModel
 state_lock = threading.Lock()
 
 from core.ml_engine import TyreDegradationModel, BrakingCoach
+from core.physics_engine import AeroAnalyzer
 
-# ML Models
+# ML & Physics Models
 tyre_model = TyreDegradationModel()
 braking_coach = BrakingCoach()
+aero_analyzer = AeroAnalyzer()
 
 # Best Lap Tracking
 best_lap_time = 9999999.0  # ms
@@ -55,6 +57,7 @@ def update_telemetry(chunk_df):
             # We append the latest point to the full lap path
             current_lap_path.append({
                 'PosX': pos_x,
+                'PosY': latest.get('PosY', 0),
                 'PosZ': pos_z,
                 'Speed': latest.get('Speed', 0),
                 'Brake': latest.get('Brake', 0.0),
@@ -92,6 +95,7 @@ def set_lap_completed(lap_num, lap_time_ms):
             best_lap_time = lap_time_ms
             best_lap_data = list(lap_data)
             braking_coach.load_best_lap(best_lap_data)
+            aero_analyzer.update_baseline(best_lap_data)
 
 def get_best_lap_data():
     with state_lock:

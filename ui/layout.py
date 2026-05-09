@@ -128,6 +128,10 @@ def create_analysis_tab():
             dcc.Graph(id='compare-graph')
         ]),
         html.Div(className='card', style={'marginTop': '20px'}, children=[
+            html.Div("3D Track Analysis (Elevation)", className='card-title'),
+            dcc.Graph(id='analysis-3d-graph', style={'height': '500px'})
+        ]),
+        html.Div(className='card', style={'marginTop': '20px'}, children=[
             html.Div("Export Analysis", className='card-title'),
             html.Button("Export Current Session to MoTeC (CSV)", id='btn-export-motec', className='btn-primary'),
             html.Div(id='export-motec-status', style={'marginTop': '10px', 'color': '#00d2be'})

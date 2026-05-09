@@ -218,6 +218,47 @@ class TelemetryPlots:
         return fig
 
     @staticmethod
+    def create_3d_track_map(df):
+        fig = go.Figure()
+        
+        if df is None or df.empty or 'PosX' not in df.columns:
+            fig.update_layout(title="3D Replay (No Data)", **PLOTLY_DARK['layout'])
+            return fig
+            
+        # 3D line colored by speed
+        fig.add_trace(go.Scatter3d(
+            x=df['PosX'], y=df['PosZ'], z=df['PosY'],
+            mode='lines',
+            line=dict(
+                color=df['Speed'],
+                colorscale='Viridis',
+                width=5
+            ),
+            name='3D Path'
+        ))
+        
+        # Current position
+        fig.add_trace(go.Scatter3d(
+            x=[df['PosX'].iloc[-1]], y=[df['PosZ'].iloc[-1]], z=[df['PosY'].iloc[-1]],
+            mode='markers',
+            marker=dict(size=8, color='#ff1801'),
+            name='Live Pos'
+        ))
+        
+        fig.update_layout(
+            title="3D Track Analysis (Elevation)",
+            scene=dict(
+                xaxis_title="X",
+                yaxis_title="Z",
+                zaxis_title="Elevation (Y)",
+                aspectmode='data',
+                **PLOTLY_DARK['layout'].get('scene', {})
+            ),
+            **PLOTLY_DARK['layout']
+        )
+        return fig
+
+    @staticmethod
     def create_weather_radar_plot(forecasts):
         fig = go.Figure()
         
