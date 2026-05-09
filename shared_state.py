@@ -1,7 +1,12 @@
 import threading
 
+from core.ml_engine import TyreDegradationModel
+
 # Thread lock for safe read/write across Dash (Flask) threads and UDP Listener thread
 state_lock = threading.Lock()
+
+# ML Models
+tyre_model = TyreDegradationModel()
 
 # The latest full telemetry chunk (list of dicts)
 latest_telemetry_chunk = []
@@ -13,9 +18,10 @@ current_lap_path = []
 current_lap_num = 0
 
 latest_leaderboard = []
+completed_laps_data = {}
 
 def update_telemetry(chunk_df):
-    global latest_telemetry_chunk, current_lap_path, current_lap_num
+    global latest_telemetry_chunk, current_lap_path, current_lap_num, completed_laps_data
     with state_lock:
         if chunk_df.empty: return
         
@@ -26,6 +32,8 @@ def update_telemetry(chunk_df):
         lap = latest.get('LapNum', 0)
         
         if lap != current_lap_num and current_lap_num > 0:
+            if len(current_lap_path) > 10:
+                completed_laps_data[current_lap_num] = list(current_lap_path)
             current_lap_path.clear()
             current_lap_num = lap
         elif current_lap_num == 0:
@@ -56,4 +64,13 @@ def update_leaderboard(lb):
 def get_leaderboard():
     with state_lock:
         return list(latest_leaderboard)
+
+def get_completed_lap_numbers():
+    with state_lock:
+        return sorted(list(completed_laps_data.keys()))
+
+def get_completed_lap_data(lap_num):
+    with state_lock:
+        lap_data = completed_laps_data.get(int(lap_num))
+        return list(lap_data) if lap_data else []
 

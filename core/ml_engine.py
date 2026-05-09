@@ -5,6 +5,7 @@ from pathlib import Path
 try:
     from sklearn.cluster import KMeans
     from sklearn.preprocessing import StandardScaler
+    from sklearn.ensemble import RandomForestRegressor
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
@@ -54,6 +55,35 @@ class MLEngine:
         # Consistency: the lower the deviation, the better (100% = perfect)
         consistency = max(0.0, 100.0 - (std / mean * 100))
         return {'mean': mean, 'std': std, 'consistency_pct': consistency, 'best': best}
+
+class TyreDegradationModel:
+    def __init__(self):
+        self.model = RandomForestRegressor(n_estimators=100, random_state=42) if HAS_SKLEARN else None
+        self.is_trained = False
+        
+        # We will train on dummy synthetic data so the model has "experience" out of the box.
+        if self.model:
+            # Features: [CurrentWearPct, TrackTemp, WheelSlipAvg, SuspStressAvg]
+            # Target: Laps remaining until wear > 75%
+            X_train = np.array([
+                [10.0, 30.0, 0.05, 1.5],
+                [20.0, 35.0, 0.10, 1.8],
+                [40.0, 40.0, 0.20, 2.0],
+                [60.0, 45.0, 0.30, 2.5],
+                [70.0, 50.0, 0.40, 3.0]
+            ])
+            # Remaining laps to cliff (assuming cliff is 75%)
+            y_train = np.array([25, 18, 10, 4, 1])
+            self.model.fit(X_train, y_train)
+            self.is_trained = True
+            
+    def predict_cliff_laps(self, current_wear, track_temp, wheel_slip, susp_stress):
+        if not self.is_trained or not self.model:
+            return -1
+        # Predict remaining laps until cliff
+        X_test = np.array([[current_wear, track_temp, wheel_slip, susp_stress]])
+        pred = self.model.predict(X_test)[0]
+        return max(0, int(pred))
 
 def run_ml_analysis_pass(input_file="braking_points.json", output_file="optimal_braking.json"):
     """

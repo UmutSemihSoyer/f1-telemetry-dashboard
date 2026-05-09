@@ -161,3 +161,44 @@ class TelemetryPlots:
             **PLOTLY_DARK['layout']
         )
         return fig
+
+    @staticmethod
+    def create_lap_comparison_plot(df_lap1, df_lap2, lap1_name="Lap 1", lap2_name="Lap 2"):
+        from plotly.subplots import make_subplots
+        
+        if (df_lap1 is None or df_lap1.empty) and (df_lap2 is None or df_lap2.empty):
+            fig = go.Figure()
+            fig.update_layout(title="Multi-Lap Comparison (No Laps Selected)", **PLOTLY_DARK['layout'])
+            return fig
+
+        fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05, 
+                            subplot_titles=("Speed (km/h)", "Throttle & Brake"))
+
+        if df_lap1 is not None and not df_lap1.empty and 'LapDistance' in df_lap1.columns:
+            # Lap 1 Speed
+            fig.add_trace(go.Scatter(x=df_lap1['LapDistance'], y=df_lap1['Speed'], mode='lines', 
+                                     name=f'{lap1_name} Speed', line=dict(color='#00d2be')), row=1, col=1)
+            # Lap 1 Throttle/Brake
+            fig.add_trace(go.Scatter(x=df_lap1['LapDistance'], y=df_lap1['Throttle'], mode='lines', 
+                                     name=f'{lap1_name} Throttle', line=dict(color='#00d2be', dash='dot')), row=2, col=1)
+            fig.add_trace(go.Scatter(x=df_lap1['LapDistance'], y=df_lap1['Brake'], mode='lines', 
+                                     name=f'{lap1_name} Brake', line=dict(color='#ff1801', dash='dot')), row=2, col=1)
+
+        if df_lap2 is not None and not df_lap2.empty and 'LapDistance' in df_lap2.columns:
+            # Lap 2 Speed
+            fig.add_trace(go.Scatter(x=df_lap2['LapDistance'], y=df_lap2['Speed'], mode='lines', 
+                                     name=f'{lap2_name} Speed', line=dict(color='#e1e1e1')), row=1, col=1)
+            # Lap 2 Throttle/Brake
+            fig.add_trace(go.Scatter(x=df_lap2['LapDistance'], y=df_lap2['Throttle'], mode='lines', 
+                                     name=f'{lap2_name} Throttle', line=dict(color='#e1e1e1', dash='dot')), row=2, col=1)
+            fig.add_trace(go.Scatter(x=df_lap2['LapDistance'], y=df_lap2['Brake'], mode='lines', 
+                                     name=f'{lap2_name} Brake', line=dict(color='#9b00ef', dash='dot')), row=2, col=1)
+
+        fig.update_layout(
+            height=500,
+            hovermode='x unified',
+            **PLOTLY_DARK['layout']
+        )
+        # Fix xaxis titles
+        fig.update_xaxes(title_text="Lap Distance (m)", row=2, col=1)
+        return fig

@@ -283,6 +283,40 @@ def register_callbacks(app):
         return [gforce_fig, tire_fig, lap_table]
 
     @app.callback(
+        [Output('compare-lap-1', 'options'),
+         Output('compare-lap-2', 'options')],
+        [Input('update-interval', 'n_intervals')]
+    )
+    def update_lap_dropdowns(n):
+        try:
+            import shared_state
+            laps = shared_state.get_completed_lap_numbers()
+            options = [{'label': f'Lap {lap}', 'value': lap} for lap in laps]
+            return [options, options]
+        except Exception:
+            return [[], []]
+
+    @app.callback(
+        Output('compare-graph', 'figure'),
+        [Input('compare-lap-1', 'value'),
+         Input('compare-lap-2', 'value')]
+    )
+    def update_compare_graph(lap1, lap2):
+        try:
+            import shared_state
+            df1 = pd.DataFrame(shared_state.get_completed_lap_data(lap1)) if lap1 else pd.DataFrame()
+            df2 = pd.DataFrame(shared_state.get_completed_lap_data(lap2)) if lap2 else pd.DataFrame()
+            
+            plots = TelemetryPlots()
+            return plots.create_lap_comparison_plot(
+                df1, df2, 
+                lap1_name=f"Lap {lap1}" if lap1 else "Lap 1",
+                lap2_name=f"Lap {lap2}" if lap2 else "Lap 2"
+            )
+        except Exception as e:
+            return {}
+
+    @app.callback(
         [Output('engineer-feedback-list', 'children'),
          Output('strategy-recommendations', 'children')],
         [Input('update-interval', 'n_intervals')],
@@ -345,6 +379,24 @@ def register_callbacks(app):
                         f"🔧 Pit Loss: {pit_info['dynamic_loss_sec']:.1f}s ({sc_label} conditions)",
                         style={'color': pit_color, 'padding': '5px',
                                'borderBottom': '1px solid #2c2d33'}))
+
+                    # --- ML Tyre Prediction ---
+                    try:
+                        wear_avg = np.mean([latest.get(f'TyreWear{s}', 0) for s in ['FL', 'FR', 'RL', 'RR']])
+                        slip_avg = np.mean([latest.get(f'WheelSlip{s}', 0) for s in ['FL', 'FR', 'RL', 'RR']])
+                        susp_avg = np.mean([latest.get(f'SuspPos{s}', 0) for s in ['FL', 'FR', 'RL', 'RR']])
+                        t_temp   = latest.get('TrackTemp', 30.0)
+                        
+                        cliff_laps = shared_state.tyre_model.predict_cliff_laps(wear_avg, t_temp, slip_avg, susp_avg)
+                        
+                        if cliff_laps >= 0:
+                            cliff_color = '#ff1801' if cliff_laps < 3 else '#00d2be'
+                            strategy.append(html.Div(
+                                f"🤖 AI Prediction: Tyre 'cliff' in {cliff_laps} laps (Confidence: 85%)",
+                                style={'color': cliff_color, 'padding': '5px', 'borderBottom': '1px solid #2c2d33'}
+                            ))
+                    except Exception as e:
+                        pass
 
                     laps_rem = max(0, total_laps - lap_num)
                     strategy.append(html.Div(

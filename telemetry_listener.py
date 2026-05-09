@@ -8,7 +8,9 @@ from core.listener import TelemetryListener
 from core.ml_engine import run_ml_analysis_pass
 from services.data_service import DataService
 from services.race_engineer import generate_lap_feedback
-from voice_alerts import (start_voice_thread, radio_engineer_feedback)
+from voice_alerts import (start_voice_thread, radio_engineer_feedback, alert_tyre_critical, 
+                          alert_tyre_warn, alert_ers_critical, alert_fuel_critical, 
+                          alert_fuel_warn, alert_safety_car, speak)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -152,6 +154,44 @@ class TelemetryManager:
             logger.error(f"Failed to update shared_state: {e}")
 
         self.telemetry_buffer.clear()
+        
+        # Trigger voice alerts based on latest data
+        self.trigger_voice_alerts(df.iloc[-1])
+
+    def trigger_voice_alerts(self, latest):
+        """Analyze latest telemetry row and trigger voice cues if necessary."""
+        # 1. Tyre Wear (average)
+        w_fl, w_fr = latest.get('TyreWearFL', 0), latest.get('TyreWearFR', 0)
+        w_rl, w_rr = latest.get('TyreWearRL', 0), latest.get('TyreWearRR', 0)
+        avg_wear = (w_fl + w_fr + w_rl + w_rr) / 4.0
+        
+        if avg_wear > 75:
+            alert_tyre_critical(avg_wear)
+        elif avg_wear > 45:
+            alert_tyre_warn(avg_wear)
+            
+        # 2. Fuel
+        fuel_laps = latest.get('FuelLaps', 0)
+        if fuel_laps > 0:
+            if fuel_laps < 1.0:
+                alert_fuel_critical(fuel_laps)
+            elif fuel_laps < 3.0:
+                alert_fuel_warn(fuel_laps)
+                
+        # 3. ERS
+        ers_pct = latest.get('ERS', 0)
+        if ers_pct < 10:
+            alert_ers_critical(ers_pct)
+            
+        # 4. Gaps / DRS
+        gap_ahead = latest.get('GapAhead', 99.0)
+        if 0 < gap_ahead < 1.0:
+            speak(f"DRS distance! Gap ahead is {gap_ahead:.2f} seconds. Push now!", "drs_warn")
+            
+        # 5. Safety Car
+        sc_status = latest.get('SafetyCarStatus', 0)
+        if sc_status > 0:
+            alert_safety_car(sc_status)
 
     def handle_lap_completion(self, lap_item):
         lap_num = self._last_lap_num

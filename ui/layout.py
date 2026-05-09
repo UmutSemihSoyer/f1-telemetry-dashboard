@@ -104,9 +104,17 @@ def create_analysis_tab():
                 dcc.Graph(id='analysis-tire-wear')
             ])
         ]),
-        html.Div(className='card', children=[
+        html.Div(className='card', style={'marginBottom': '20px'}, children=[
             html.Div("Lap History", className='card-title'),
             html.Div(id='lap-history-table')
+        ]),
+        html.Div(className='card', children=[
+            html.Div("Multi-Lap Comparison Overlay", className='card-title'),
+            html.Div(style={'display': 'flex', 'gap': '20px', 'marginBottom': '10px'}, children=[
+                dcc.Dropdown(id='compare-lap-1', placeholder="Select Lap A", style={'flex': '1', 'color': '#000'}),
+                dcc.Dropdown(id='compare-lap-2', placeholder="Select Lap B", style={'flex': '1', 'color': '#000'})
+            ]),
+            dcc.Graph(id='compare-graph')
         ])
     ])
 
